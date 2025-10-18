@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Send, Sparkles, Clipboard, Check } from 'lucide-react';
+import { ArrowLeft, Send, Sparkles, Clipboard, Check, UploadCloud } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { staticData as initialStaticData } from '../data-statis';
@@ -209,4 +209,3 @@ export default function NgobrolPage() {
         </main>
     );
 }
-
