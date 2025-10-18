@@ -15,6 +15,7 @@ import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-imag
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
     const [currentSelection, setCurrentSelection] = useState(currentImageId);
@@ -188,6 +189,10 @@ export default function AdminPlaylistSayaPage() {
                 imageId: selectedImage,
                 songs: []
             };
+            if (playlistsData.some(p => p.title.toLowerCase() === newPlaylist.title.toLowerCase())) {
+                toast({ variant: 'destructive', title: 'Gagal', description: 'Playlist dengan judul yang sama sudah ada.' });
+                return;
+            }
             updatedPlaylists = [...playlistsData, newPlaylist];
             toast({ title: "Sukses!", description: "Playlist baru telah ditambahkan." });
         }
@@ -229,6 +234,11 @@ export default function AdminPlaylistSayaPage() {
             
             const updatedPlaylists = playlistsData.map(pl => {
                 if (pl.id === playlistId) {
+                    // Check for duplicate song titles within the same playlist
+                    if (pl.songs.some(s => s.title.toLowerCase() === newSong.title.toLowerCase())) {
+                        toast({ variant: 'destructive', title: 'Gagal', description: `Lagu "${newSong.title}" sudah ada di playlist ini.` });
+                        throw new Error("Duplicate song");
+                    }
                     return { ...pl, songs: [...pl.songs, newSong] };
                 }
                 return pl;
@@ -237,17 +247,21 @@ export default function AdminPlaylistSayaPage() {
             try {
                 saveData(updatedPlaylists);
                 toast({ title: "Sukses!", description: `Lagu ${newSong.title} telah ditambahkan.` });
-            } catch (error) {
-                toast({
-                    variant: "destructive",
-                    title: "Penyimpanan Penuh",
-                    description: "Gagal menyimpan lagu. Penyimpanan lokal browser mungkin penuh.",
-                });
-                return;
+                 const closeBtnId = `close-song-new-${playlistId}-dialog`;
+                 document.getElementById(closeBtnId)?.click();
+            } catch (error: any) {
+                if (error.message !== "Duplicate song") {
+                    toast({
+                        variant: "destructive",
+                        title: "Penyimpanan Penuh",
+                        description: "Gagal menyimpan lagu. Penyimpanan lokal browser mungkin penuh.",
+                    });
+                }
             }
-            const closeBtnId = `close-song-new-${playlistId}-dialog`;
-            document.getElementById(closeBtnId)?.click();
         };
+        reader.onerror = () => {
+            toast({ variant: "destructive", title: "Gagal Membaca File", description: "Terjadi kesalahan saat membaca file audio." });
+        }
         reader.readAsDataURL(audioFile);
     };
     
@@ -343,28 +357,34 @@ export default function AdminPlaylistSayaPage() {
     
     return (
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg w-full">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                     <CardTitle>Kelola "Playlist Saya"</CardTitle>
                     <CardDescription>Ubah info umum playlist dan kelola daftar lagu.</CardDescription>
                 </div>
-                 <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2 flex-shrink-0">
                     <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
-                    <Dialog open={isPasteImportOpen} onOpenChange={setIsPasteImportOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline"><FileJson className="h-4 w-4 mr-2" />Impor Teks</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>Impor Playlist dari Teks</DialogTitle></DialogHeader>
-                            <div className="py-4">
-                                <Label htmlFor="json-paste-area">Tempel konten JSON di sini:</Label>
-                                <Textarea id="json-paste-area" className="mt-2 font-mono h-64" value={jsonInput} onChange={(e) => setJsonInput(e.target.value)} />
-                            </div>
-                            <DialogFooter><Button onClick={handleImportFromJsonText}>Impor Sekarang</Button></DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                    <Button variant="outline" onClick={handleImportClick}><UploadCloud className="h-4 w-4 mr-2" />Impor File</Button>
-                    <Button variant="outline" onClick={handleExport}><Download className="h-4 w-4 mr-2" />Ekspor</Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline"><UploadCloud className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onSelect={handleImportClick}>
+                                <UploadCloud className="mr-2 h-4 w-4" />
+                                Impor dari File...
+                            </DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => setIsPasteImportOpen(true)}>
+                                <FileJson className="mr-2 h-4 w-4" />
+                                Impor dari Teks...
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator/>
+                            <DropdownMenuItem onSelect={handleExport}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Ekspor ke JSON
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
                     <Dialog onOpenChange={(open) => !open && setSelectedImage('')}>
                         <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Playlist</Button></DialogTrigger>
                         <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
@@ -379,8 +399,8 @@ export default function AdminPlaylistSayaPage() {
             <CardContent className="space-y-4">
                 <Accordion type="single" collapsible className="w-full">
                     {playlistsData.map(playlist => (
-                        <AccordionItem value={playlist.id} key={playlist.id} className="bg-muted/50 rounded-lg px-4 mb-2">
-                             <AccordionTrigger className="hover:no-underline">
+                        <AccordionItem value={playlist.id} key={playlist.id} className="bg-muted/50 rounded-lg px-4 mb-2 border-b-0">
+                             <AccordionTrigger className="hover:no-underline py-3">
                                 <div className="flex items-center justify-between w-full">
                                     <p className="font-medium text-lg">{playlist.title}</p>
                                     <div className="flex items-center gap-2 pr-4">
@@ -400,7 +420,7 @@ export default function AdminPlaylistSayaPage() {
                             <AccordionContent className="pt-2">
                                 <div className="border-t border-primary/10 pt-4">
                                     <div className="flex justify-between items-center mb-4">
-                                        <h4 className="font-semibold">Daftar Lagu</h4>
+                                        <h4 className="font-semibold">Daftar Lagu ({playlist.songs.length})</h4>
                                         <Dialog>
                                             <DialogTrigger asChild>
                                                 <Button size="sm"><Plus className="h-4 w-4 mr-2" />Tambah Lagu</Button>
@@ -411,7 +431,7 @@ export default function AdminPlaylistSayaPage() {
                                             </DialogContent>
                                         </Dialog>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                                         {playlist.songs.length > 0 ? playlist.songs.map(song => (
                                             <div key={song.title} className="flex items-center justify-between p-2 bg-background rounded-md">
                                                 <div className="flex items-center gap-3">
@@ -431,6 +451,17 @@ export default function AdminPlaylistSayaPage() {
                     ))}
                 </Accordion>
             </CardContent>
+             <Dialog open={isPasteImportOpen} onOpenChange={setIsPasteImportOpen}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Impor Playlist dari Teks</DialogTitle></DialogHeader>
+                    <div className="py-4">
+                        <Label htmlFor="json-paste-area">Tempel konten JSON di sini:</Label>
+                        <Textarea id="json-paste-area" className="mt-2 font-mono h-64" value={jsonInput} onChange={(e) => setJsonInput(e.target.value)} />
+                    </div>
+                    <DialogFooter><Button onClick={handleImportFromJsonText}>Impor Sekarang</Button></DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card>
     );
 }
+

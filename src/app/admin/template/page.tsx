@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { staticData, type Playlist, type Song } from "@/app/data-statis";
+import { staticData } from "@/app/data-statis";
 
 export default function AdminTemplatePage() {
     const { toast } = useToast();
@@ -43,26 +43,15 @@ export default function AdminTemplatePage() {
         handleDownload(resepTemplate, 'resep-template.json');
     };
 
-     const handleDownloadPlaylistTemplate = () => {
-        const playlistTemplate: Playlist[] = [
+     const handleDownloadPeralatanTemplate = () => {
+        const peralatanTemplate = [
             {
-                id: "playlist-contoh-123",
-                title: "Nama Playlist Anda",
-                description: "Deskripsi singkat tentang playlist ini.",
-                imageId: "coffee-journey",
-                songs: [
-                    {
-                        title: "Judul Lagu Contoh",
-                        artist: "Nama Artis Contoh",
-                        audioUrl: "data:audio/mp3;base64,..." // base64 data akan ditambahkan saat unggah file
-                    }
-                ]
+                "name": "Nama Alat Contoh",
+                "description": "Deskripsi singkat tentang fungsi dan keunikan alat ini.",
+                "icon": "Coffee"
             }
         ];
-        // Note: audioUrl will be populated on actual file upload in the admin UI,
-        // so we can leave it empty or with a placeholder in the template.
-        playlistTemplate[0].songs[0].audioUrl = ""; 
-        handleDownload(playlistTemplate, 'playlist-template.json');
+        handleDownload(peralatanTemplate, 'peralatan-template.json');
     };
 
     const handleDownloadMenuTemplate = () => {
@@ -76,7 +65,7 @@ export default function AdminTemplatePage() {
             <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
                 <CardHeader>
                     <CardTitle>Template Menu & Konten</CardTitle>
-                    <CardDescription>Unduh template JSON untuk mengelola konten utama situs seperti data di halaman utama, kisah saya, peralatan, dll. File ini **tidak** untuk diimpor kembali, hanya sebagai referensi struktur data.</CardDescription>
+                    <CardDescription>Unduh template JSON untuk mengelola konten utama situs seperti data di halaman utama, kisah saya, dll. File ini **tidak** untuk diimpor kembali, hanya sebagai referensi struktur data.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Button onClick={handleDownloadMenuTemplate} className="w-full">
@@ -101,13 +90,13 @@ export default function AdminTemplatePage() {
 
              <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
                 <CardHeader>
-                    <CardTitle>Template Playlist</CardTitle>
-                    <CardDescription>Unduh template JSON untuk menambahkan playlist dalam jumlah besar. Edit file ini lalu impor melalui halaman "Kelola Playlist Saya".</CardDescription>
+                    <CardTitle>Template Peralatan</CardTitle>
+                    <CardDescription>Unduh template JSON untuk menambahkan item peralatan dalam jumlah besar. Edit file ini lalu impor melalui halaman "Kelola Peralatan".</CardDescription>
                 </CardHeader>
                 <CardContent>
-                     <Button onClick={handleDownloadPlaylistTemplate} className="w-full">
+                     <Button onClick={handleDownloadPeralatanTemplate} className="w-full">
                         <Download className="mr-2 h-4 w-4" />
-                        Unduh playlist-template.json
+                        Unduh peralatan-template.json
                     </Button>
                 </CardContent>
             </Card>
