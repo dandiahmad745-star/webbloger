@@ -2,53 +2,80 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Globe, Leaf, Star } from "lucide-react";
 import Link from "next/link";
+import { coffeeBeans } from "./coffee-data";
+import { Badge } from "@/components/ui/badge";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 
+
 export default function LearnCoffeePage() {
-    const coffeeJourneyImage: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === 'coffee-journey');
+    const coffeeJourneyImage: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === 'coffee-journey-alt');
 
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 fade-in bg-background">
-            <div className="w-full max-w-4xl mx-auto">
-                <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-2xl shadow-primary/5 rounded-2xl overflow-hidden">
-                    <CardHeader className="p-6 md:p-8 relative">
-                        {coffeeJourneyImage && (
-                            <Image
-                                src={coffeeJourneyImage.imageUrl}
-                                alt={coffeeJourneyImage.description}
-                                data-ai-hint={coffeeJourneyImage.imageHint}
-                                fill
-                                className="object-cover opacity-20"
-                            />
-                        )}
-                        <div className="relative z-10">
-                            <Link href="/" passHref>
-                                <Button variant="ghost" size="icon" className="absolute top-4 left-4 text-primary hover:bg-primary/10">
-                                    <ArrowLeft />
-                                </Button>
-                            </Link>
-                            <CardTitle className="font-headline text-4xl md:text-5xl text-primary text-center pt-16">
-                                Learn Coffee
-                            </CardTitle>
-                            <CardDescription className="font-body text-base md:text-lg text-foreground/80 text-center pt-2">
-                                Menyelami Dunia Kopi, dari Biji hingga Cangkir
-                            </CardDescription>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-6 md:p-8 text-lg font-body text-foreground/90 space-y-6">
-                        <p>
-                            Selamat datang di perjalanan kopi saya! Di sini, kita akan menjelajahi berbagai aspek menarik dari dunia kopi. Mulai dari mengenal perbedaan antara biji Arabika dan Robusta, memahami proses roasting yang menentukan karakter rasa, hingga menguasai berbagai metode seduh untuk menghasilkan secangkir kopi yang sempurna.
+        <main className="min-h-screen w-full bg-background text-foreground fade-in">
+            <div className="relative h-80 w-full">
+                 {coffeeJourneyImage && (
+                    <Image
+                        src={coffeeJourneyImage.imageUrl}
+                        alt={coffeeJourneyImage.description}
+                        data-ai-hint={coffeeJourneyImage.imageHint}
+                        fill
+                        className="object-cover"
+                    />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+                <div className="absolute top-4 left-4 z-10">
+                    <Link href="/" passHref>
+                        <Button variant="ghost" size="icon" className="text-white bg-black/20 hover:bg-black/40">
+                            <ArrowLeft />
+                        </Button>
+                    </Link>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
+                    <div className="max-w-4xl mx-auto">
+                        <h1 className="font-headline text-4xl md:text-6xl text-white">Jelajahi Dunia Kopi</h1>
+                        <p className="font-body text-base md:text-lg text-white/80 mt-2 max-w-2xl">
+                            Temukan cerita dan karakteristik unik di balik setiap biji kopi dari berbagai penjuru dunia.
                         </p>
-                        <p>
-                            Setiap biji kopi memiliki cerita uniknya sendiri, dipengaruhi oleh tanah tempat ia tumbuh, iklim, dan tangan-tangan terampil yang merawatnya. Mari kita temukan bersama rahasia di balik aroma yang memikat dan cita rasa yang kompleks.
-                        </p>
-                         <p>
-                           Apakah Anda seorang pemula yang ingin belajar atau seorang penikmat kopi yang ingin memperdalam pengetahuan, halaman ini didedikasikan untuk Anda. Mari kita mulai petualangan kopi ini!
-                        </p>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
+            </div>
+
+            <div className="p-8 md:p-12 -mt-16">
+                <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {coffeeBeans.map((bean) => {
+                         const beanImage = PlaceHolderImages.find(p => p.id === bean.imageId);
+                        return(
+                        <Card key={bean.id} className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg hover:shadow-primary/10 transition-shadow duration-300 rounded-2xl overflow-hidden flex flex-col">
+                           {beanImage && (
+                             <CardHeader className="p-0 relative h-48">
+                                <Image
+                                    src={beanImage.imageUrl}
+                                    alt={bean.name}
+                                    data-ai-hint={beanImage.imageHint}
+                                    fill
+                                    className="object-cover"
+                                />
+                            </CardHeader>
+                           )}
+                            <CardContent className="p-6 flex flex-col flex-grow">
+                                <Badge variant="secondary" className="w-fit mb-2">{bean.type}</Badge>
+                                <CardTitle className="font-headline text-2xl text-primary mb-2">{bean.name}</CardTitle>
+                                <div className="flex items-center text-sm text-muted-foreground mb-4">
+                                    <Globe className="w-4 h-4 mr-2" />
+                                    <span>{bean.origin}</span>
+                                </div>
+                                <CardDescription className="font-body text-foreground/80 flex-grow">{bean.description}</CardDescription>
+                                <div className="flex items-center mt-6">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                        <Star key={i} className={`w-5 h-5 ${i < bean.rating ? 'text-accent fill-accent' : 'text-muted-foreground/30'}`} />
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )})}
+                </div>
             </div>
         </main>
     );

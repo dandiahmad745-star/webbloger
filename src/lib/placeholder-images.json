@@ -13,6 +13,12 @@
       "imageHint": "coffee beans"
     },
     {
+      "id": "coffee-journey-alt",
+      "description": "Pemandangan perkebunan kopi dari atas.",
+      "imageUrl": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjBsYW5kc2NhcGV8ZW58MHx8fHwxNzYxMjAwOTYxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "coffee landscape"
+    },
+    {
       "id": "barista-story",
       "description": "Seorang barista sedang menuangkan latte art.",
       "imageUrl": "https://images.unsplash.com/photo-1511920170033-f832d72d7353?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxiYXJpc3RhfGVufDB8fHx8MTc2MDc1Mzg0Mnww&ixlib=rb-4.1.0&q=80&w=1080",
@@ -23,6 +29,42 @@
       "description": "Berbagai macam peralatan kopi di atas meja.",
       "imageUrl": "https://images.unsplash.com/photo-1528699633785-3431206f3569?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjB1dGVuc2lsc3xlbnwwfHx8fDE3NjA3NTM4NzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "coffee equipment"
+    },
+    {
+      "id": "gayo-beans",
+      "description": "Biji kopi Gayo Aceh yang baru disangrai.",
+      "imageUrl": "https://images.unsplash.com/photo-1599339343359-f222ac7a35a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxyb2FzdGVkJTIwY29mZmVlJTIwYmVhbnN8ZW58MHx8fHwxNzYxMjAxMDExfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "roasted coffee"
+    },
+    {
+      "id": "kintamani-beans",
+      "description": "Biji kopi hijau Kintamani Bali sebelum disangrai.",
+      "imageUrl": "https://images.unsplash.com/photo-1620371350502-999e9a7d80a4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxncmVlbiUyMGNvZmZlZSUyMGJlYW5zfGVufDB8fHx8MTc2MTIwMTAzNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "green coffee"
+    },
+    {
+      "id": "sidamo-beans",
+      "description": "Secangkir kopi hitam mengepul dengan biji kopi Ethiopia.",
+      "imageUrl": "https://images.unsplash.com/photo-1579257933103-248c18b843d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxldGhpb3BpYW4lMjBjb2ZmZWV8ZW58MHx8fHwxNzYxMjAxMDYxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ethiopian coffee"
+    },
+    {
+      "id": "lampung-beans",
+      "description": "Tumpukan biji kopi Robusta yang gelap dan pekat.",
+      "imageUrl": "https://images.unsplash.com/photo-1579373449969-1c6f78a4891b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxyb2J1c3RhJTIwYmVhbnN8ZW58MHx8fHwxNzYxMjAxMDg2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "robusta beans"
+    },
+    {
+      "id": "colombia-beans",
+      "description": "Petani kopi Kolombia memegang biji kopi segar.",
+      "imageUrl": "https://images.unsplash.com/photo-1558031924-c543f293977c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjb2xvbWJpYW4lMjBjb2ZmZWV8ZW58MHx8fHwxNzYxMjAxMTIwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "colombian coffee"
+    },
+    {
+      "id": "java-beans",
+      "description": "Cangkir keramik tradisional berisi kopi Jawa.",
+      "imageUrl": "https://images.unsplash.com/photo-1559496417-e7f25cb247f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxqYXZhbmVzZSUyMGNvZmZlZXxlbnwwfHx8fDE3NjEyMDExNDF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "javanese coffee"
     }
   ]
 }
