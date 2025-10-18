@@ -80,10 +80,20 @@ export default function AdminResepKopiPage() {
         const fileInputRef = useRef<HTMLInputElement>(null);
 
         useEffect(() => {
-            try {
-                const savedUserImages = localStorage.getItem('userImages');
-                if (savedUserImages) setUserImages(JSON.parse(savedUserImages));
-            } catch (error) { console.error("Gagal memuat gambar pengguna dari localStorage", error); }
+            if (typeof window === 'undefined') return;
+            const loadImages = () => {
+                try {
+                    const savedUserImages = localStorage.getItem('userImages');
+                    if (savedUserImages) {
+                        setUserImages(JSON.parse(savedUserImages));
+                    }
+                } catch (error) {
+                    console.error("Failed to parse user images from localStorage", error);
+                }
+            };
+            loadImages();
+            window.addEventListener('storage', loadImages);
+            return () => window.removeEventListener('storage', loadImages);
         }, []);
 
         const handleSelect = (id: string) => {
@@ -101,11 +111,18 @@ export default function AdminResepKopiPage() {
                     const dataUrl = e.target?.result as string;
                     const newImageId = `user-img-${Date.now()}`;
                     const newImage: ImagePlaceholder = { id: newImageId, imageUrl: dataUrl, description: file.name, imageHint: 'custom upload' };
-                    const updatedUserImages = [...userImages, newImage];
+                    
+                    const existingImagesRaw = localStorage.getItem('userImages');
+                    const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
+                    const updatedUserImages = [...existingImages, newImage];
+
                     setUserImages(updatedUserImages);
                     localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
                     handleSelect(newImageId);
+                    
                     toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
+
+                    window.dispatchEvent(new Event('storage'));
                 };
                 reader.readAsDataURL(file);
             }

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -75,9 +75,10 @@ export default function AdminCoffeeBeansPage() {
     const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
         const [currentSelection, setCurrentSelection] = useState(currentImageId);
         const [userImages, setUserImages] = useState<ImagePlaceholder[]>([]);
-        const fileInputRef = React.useRef<HTMLInputElement>(null);
+        const fileInputRef = useRef<HTMLInputElement>(null);
 
         useEffect(() => {
+            if (typeof window === 'undefined') return;
             try {
                 const savedUserImages = localStorage.getItem('userImages');
                 if (savedUserImages) {
@@ -111,11 +112,18 @@ export default function AdminCoffeeBeansPage() {
                         imageHint: 'custom upload'
                     };
                     
-                    const updatedUserImages = [...userImages, newImage];
+                    const existingImagesRaw = localStorage.getItem('userImages');
+                    const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
+                    const updatedUserImages = [...existingImages, newImage];
+                    
                     setUserImages(updatedUserImages);
                     localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
                     handleSelect(newImageId);
+                    
                     toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
+
+                    // Dispatch a storage event to notify other tabs/components
+                    window.dispatchEvent(new Event('storage'));
                 };
                 reader.readAsDataURL(file);
             }
