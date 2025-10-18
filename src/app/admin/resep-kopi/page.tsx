@@ -17,6 +17,100 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { worldRegions, allCountries, type City } from "@/lib/world-regions";
 
+const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
+    const [currentSelection, setCurrentSelection] = useState(currentImageId);
+    const [userImages, setUserImages] = useState<ImagePlaceholder[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const loadImages = () => {
+                try {
+                    const savedUserImages = localStorage.getItem('userImages');
+                    if (savedUserImages) {
+                        setUserImages(JSON.parse(savedUserImages));
+                    }
+                } catch (error) {
+                    console.error("Failed to parse user images from localStorage", error);
+                }
+            };
+            loadImages();
+            window.addEventListener('storage', loadImages);
+            return () => window.removeEventListener('storage', loadImages);
+        }
+    }, []);
+    
+    useEffect(() => {
+        setCurrentSelection(currentImageId);
+    }, [currentImageId]);
+
+    const handleSelect = (id: string) => {
+        setCurrentSelection(id);
+        onSelect(id);
+    }
+
+    const handleUploadClick = () => fileInputRef.current?.click();
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            if (file.size > 500 * 1024) { // 500KB limit
+                toast({
+                    variant: "destructive",
+                    title: "Ukuran file terlalu besar",
+                    description: "Ukuran gambar tidak boleh melebihi 500KB untuk menghemat ruang penyimpanan browser.",
+                });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target?.result as string;
+                const newImageId = `user-img-${Date.now()}`;
+                const newImage: ImagePlaceholder = { id: newImageId, imageUrl: dataUrl, description: file.name, imageHint: 'custom upload' };
+                
+                try {
+                    const existingImagesRaw = localStorage.getItem('userImages');
+                    const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
+                    const updatedUserImages = [...existingImages, newImage];
+
+                    setUserImages(updatedUserImages);
+                    localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
+                    handleSelect(newImageId);
+                    
+                    toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
+
+                    window.dispatchEvent(new Event('storage'));
+                } catch (error) {
+                     toast({
+                        variant: "destructive",
+                        title: "Penyimpanan Penuh",
+                        description: "Gagal menyimpan gambar. Penyimpanan lokal browser mungkin penuh. Coba gunakan gambar yang lebih kecil.",
+                    });
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    
+    const allImages = [...PlaceHolderImages, ...userImages];
+
+    return (
+        <div className="space-y-2">
+            <Label>Pilih Gambar</Label>
+            <div className="grid grid-cols-4 md:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
+                {allImages.map(img => (
+                    <div key={img.id} className={cn("relative aspect-square rounded-md overflow-hidden cursor-pointer border-2", currentSelection === img.id ? 'border-primary' : 'border-transparent')} onClick={() => handleSelect(img.id)}>
+                        <Image src={img.imageUrl} alt={img.description} fill className="object-cover" />
+                    </div>
+                ))}
+            </div>
+             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+             <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}><Upload className="h-4 w-4 mr-2" />Unggah Foto (Maks 500KB)</Button>
+        </div>
+    )
+}
+
 const RecipeForm = ({ recipe, onSubmit, closeBtnId, onSelectImage, onCountryChange, onCityChange, selectedCountry, selectedCity, availableCities }: { 
     recipe?: CoffeeRecipe, 
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, 
@@ -77,83 +171,6 @@ const RecipeForm = ({ recipe, onSubmit, closeBtnId, onSelectImage, onCountryChan
     </form>
 )};
 
-const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
-    const [currentSelection, setCurrentSelection] = useState(currentImageId);
-    const [userImages, setUserImages] = useState<ImagePlaceholder[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { toast } = useToast();
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const loadImages = () => {
-                try {
-                    const savedUserImages = localStorage.getItem('userImages');
-                    if (savedUserImages) {
-                        setUserImages(JSON.parse(savedUserImages));
-                    }
-                } catch (error) {
-                    console.error("Failed to parse user images from localStorage", error);
-                }
-            };
-            loadImages();
-            window.addEventListener('storage', loadImages);
-            return () => window.removeEventListener('storage', loadImages);
-        }
-    }, []);
-    
-    useEffect(() => {
-        setCurrentSelection(currentImageId);
-    }, [currentImageId]);
-
-    const handleSelect = (id: string) => {
-        setCurrentSelection(id);
-        onSelect(id);
-    }
-
-    const handleUploadClick = () => fileInputRef.current?.click();
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const dataUrl = e.target?.result as string;
-                const newImageId = `user-img-${Date.now()}`;
-                const newImage: ImagePlaceholder = { id: newImageId, imageUrl: dataUrl, description: file.name, imageHint: 'custom upload' };
-                
-                const existingImagesRaw = localStorage.getItem('userImages');
-                const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
-                const updatedUserImages = [...existingImages, newImage];
-
-                setUserImages(updatedUserImages);
-                localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
-                handleSelect(newImageId);
-                
-                toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
-
-                window.dispatchEvent(new Event('storage'));
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
-    const allImages = [...PlaceHolderImages, ...userImages];
-
-    return (
-        <div className="space-y-2">
-            <Label>Pilih Gambar</Label>
-            <div className="grid grid-cols-4 md:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
-                {allImages.map(img => (
-                    <div key={img.id} className={cn("relative aspect-square rounded-md overflow-hidden cursor-pointer border-2", currentSelection === img.id ? 'border-primary' : 'border-transparent')} onClick={() => handleSelect(img.id)}>
-                        <Image src={img.imageUrl} alt={img.description} fill className="object-cover" />
-                    </div>
-                ))}
-            </div>
-             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-             <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}><Upload className="h-4 w-4 mr-2" />Unggah Foto</Button>
-        </div>
-    )
-}
 
 export default function AdminResepKopiPage() {
     const { toast } = useToast();
@@ -431,6 +448,8 @@ export default function AdminResepKopiPage() {
         </Card>
     );
 }
+
+    
 
     
 

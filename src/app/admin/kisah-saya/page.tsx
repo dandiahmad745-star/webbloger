@@ -52,23 +52,39 @@ const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, on
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
+            if (file.size > 500 * 1024) { // 500KB limit
+                toast({
+                    variant: "destructive",
+                    title: "Ukuran file terlalu besar",
+                    description: "Ukuran gambar tidak boleh melebihi 500KB untuk menghemat ruang penyimpanan browser.",
+                });
+                return;
+            }
             const reader = new FileReader();
             reader.onload = (e) => {
                 const dataUrl = e.target?.result as string;
                 const newImageId = `user-img-${Date.now()}`;
                 const newImage: ImagePlaceholder = { id: newImageId, imageUrl: dataUrl, description: file.name, imageHint: 'custom upload' };
                 
-                const existingImagesRaw = localStorage.getItem('userImages');
-                const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
-                const updatedUserImages = [...existingImages, newImage];
+                try {
+                    const existingImagesRaw = localStorage.getItem('userImages');
+                    const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
+                    const updatedUserImages = [...existingImages, newImage];
 
-                setUserImages(updatedUserImages);
-                localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
-                handleSelect(newImageId);
-                
-                toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
+                    setUserImages(updatedUserImages);
+                    localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
+                    handleSelect(newImageId);
+                    
+                    toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
 
-                window.dispatchEvent(new Event('storage'));
+                    window.dispatchEvent(new Event('storage'));
+                } catch (error) {
+                     toast({
+                        variant: "destructive",
+                        title: "Penyimpanan Penuh",
+                        description: "Gagal menyimpan gambar. Penyimpanan lokal browser mungkin penuh. Coba gunakan gambar yang lebih kecil.",
+                    });
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -87,7 +103,7 @@ const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, on
                 ))}
             </div>
              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-             <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}><Upload className="h-4 w-4 mr-2" />Unggah Foto</Button>
+             <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}><Upload className="h-4 w-4 mr-2" />Unggah Foto (Maks 500KB)</Button>
         </div>
     )
 }
@@ -150,3 +166,5 @@ export default function AdminKisahSayaPage() {
         </Card>
     );
 }
+
+    

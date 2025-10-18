@@ -59,23 +59,39 @@ const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, on
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
+             if (file.size > 500 * 1024) { // 500KB limit
+                toast({
+                    variant: "destructive",
+                    title: "Ukuran file terlalu besar",
+                    description: "Ukuran gambar tidak boleh melebihi 500KB untuk menghemat ruang penyimpanan browser.",
+                });
+                return;
+            }
             const reader = new FileReader();
             reader.onload = (e) => {
                 const dataUrl = e.target?.result as string;
                 const newImageId = `user-img-${Date.now()}`;
                 const newImage: ImagePlaceholder = { id: newImageId, imageUrl: dataUrl, description: file.name, imageHint: 'custom upload' };
                 
-                const existingImagesRaw = localStorage.getItem('userImages');
-                const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
-                const updatedUserImages = [...existingImages, newImage];
+                try {
+                    const existingImagesRaw = localStorage.getItem('userImages');
+                    const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
+                    const updatedUserImages = [...existingImages, newImage];
 
-                setUserImages(updatedUserImages);
-                localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
-                handleSelect(newImageId);
-                
-                toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
+                    setUserImages(updatedUserImages);
+                    localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
+                    handleSelect(newImageId);
+                    
+                    toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
 
-                window.dispatchEvent(new Event('storage'));
+                    window.dispatchEvent(new Event('storage'));
+                } catch (error) {
+                     toast({
+                        variant: "destructive",
+                        title: "Penyimpanan Penuh",
+                        description: "Gagal menyimpan gambar. Penyimpanan lokal browser mungkin penuh. Coba gunakan gambar yang lebih kecil.",
+                    });
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -94,7 +110,7 @@ const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, on
                 ))}
             </div>
              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-             <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}><Upload className="h-4 w-4 mr-2" />Unggah Foto</Button>
+             <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}><Upload className="h-4 w-4 mr-2" />Unggah Foto (Maks 500KB)</Button>
         </div>
     )
 }
@@ -103,7 +119,7 @@ const SongForm = ({ onSubmit, closeBtnId }: { onSubmit: (e: React.FormEvent<HTML
     <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2"><Label htmlFor="song-title">Judul Lagu</Label><Input id="song-title" name="title" required /></div>
         <div className="space-y-2"><Label htmlFor="artist">Artis</Label><Input id="artist" name="artist" required /></div>
-        <div className="space-y-2"><Label htmlFor="audio-file">File Audio (Maks 5MB)</Label><Input id="audio-file" name="audio-file" type="file" accept="audio/*" required /></div>
+        <div className="space-y-2"><Label htmlFor="audio-file">File Audio (Maks 2MB)</Label><Input id="audio-file" name="audio-file" type="file" accept="audio/*" required /></div>
         <DialogFooter>
             <Button type="submit">Simpan Lagu</Button>
              <DialogTrigger asChild>
@@ -170,8 +186,19 @@ export default function AdminPlaylistSayaPage() {
             
             const updatedData = {...playlistData, songs: updatedSongs};
             setPlaylistData(updatedData);
-            localStorage.setItem('playlistSayaData', JSON.stringify(updatedData));
-            toast({ title: "Sukses!", description: `Lagu ${newSong.title} telah disimpan.` });
+            try {
+                localStorage.setItem('playlistSayaData', JSON.stringify(updatedData));
+                toast({ title: "Sukses!", description: `Lagu ${newSong.title} telah disimpan.` });
+            } catch (error) {
+                toast({
+                    variant: "destructive",
+                    title: "Penyimpanan Penuh",
+                    description: "Gagal menyimpan lagu. Penyimpanan lokal browser mungkin penuh.",
+                });
+                 // Rollback state if storage fails
+                setPlaylistData(playlistData);
+                return;
+            }
             
             const closeBtnId = originalTitle ? `close-song-${originalTitle.replace(/\s+/g, '-')}-dialog` : 'close-song-new-dialog';
             const closeBtn = document.getElementById(closeBtnId);
@@ -179,8 +206,8 @@ export default function AdminPlaylistSayaPage() {
         };
 
         if (audioFile) {
-             if (audioFile.size > 5 * 1024 * 1024) { // 5MB limit
-                toast({ variant: "destructive", title: "Ukuran file terlalu besar", description: "Ukuran file audio tidak boleh melebihi 5MB." });
+             if (audioFile.size > 2 * 1024 * 1024) { // 2MB limit
+                toast({ variant: "destructive", title: "Ukuran file terlalu besar", description: "Ukuran file audio tidak boleh melebihi 2MB." });
                 return;
             }
             const reader = new FileReader();
@@ -189,7 +216,8 @@ export default function AdminPlaylistSayaPage() {
             };
             reader.readAsDataURL(audioFile);
         } else {
-            // If no new file is uploaded, keep the old audioUrl
+            // If no new file is uploaded, this must be an edit, so we keep the old audioUrl.
+            // This logic assumes we don't allow editing form without re-uploading file, which is okay for now.
             const existingSong = playlistData.songs.find(s => s.title === originalTitle);
             if(existingSong) {
                 saveSongData(existingSong.audioUrl);
@@ -263,3 +291,5 @@ export default function AdminPlaylistSayaPage() {
         </Card>
     );
 }
+
+    
