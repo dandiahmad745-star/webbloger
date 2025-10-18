@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import { staticData, type Playlist } from "../data-statis";
+import { defaultData, type Playlist } from "../data-statis";
 import { cn } from '@/lib/utils';
 import { fetchServerData } from "@/lib/api";
 import { PlaylistPlayer } from "./playlist-player";
 
 async function getPlaylists() {
-    const playlists = await fetchServerData('playlistSayaData', staticData.playlistSaya);
+    const playlists = await fetchServerData('playlistSayaData', defaultData.playlistSayaData);
     const userImages = await fetchServerData('userImages', []);
     const allImages = [...PlaceHolderImages, ...userImages];
 

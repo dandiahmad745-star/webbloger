@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Coffee, Wind, Droplets } from "lucide-react";
 import Link from "next/link";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import { staticData } from "../data-statis";
+import { defaultData } from "../data-statis";
 import { fetchServerData } from "@/lib/api";
 
 const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
@@ -15,7 +15,7 @@ const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
 };
 
 export default async function UtensilsPage() {
-    const pageData = await fetchServerData('utensilsData', staticData.utensils);
+    const pageData = await fetchServerData('utensilsData', defaultData.utensilsData);
     const userImages = await fetchServerData('userImages', []);
     const allImages = [...PlaceHolderImages, ...userImages];
 

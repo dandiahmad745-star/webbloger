@@ -3,14 +3,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { staticData } from "../data-statis";
+import { defaultData } from "../data-statis";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from "@/components/ui/button";
 import { fetchServerData } from "@/lib/api";
 import { FAQSearch } from './faq-search';
 
 export default async function FAQPage() {
-    const faqItems = await fetchServerData('faqData', staticData.faqData);
+    const faqItems = await fetchServerData('faqData', defaultData.faqData);
     
     return (
         <main className="min-h-screen w-full bg-background text-foreground fade-in">

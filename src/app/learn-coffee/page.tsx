@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Globe, Star } from "lucide-react";
 import Link from "next/link";
-import { staticData } from "../data-statis";
+import { defaultData } from "../data-statis";
 import { type CoffeeBean } from "./coffee-data";
 import { Badge } from "@/components/ui/badge";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import { fetchServerData } from "@/lib/api";
 
 export default async function LearnCoffeePage() {
-    const beans = await fetchServerData('coffeeBeansData', staticData.resepKopi);
+    const beans = await fetchServerData('coffeeBeansData', defaultData.coffeeBeansData);
     const userImages = await fetchServerData('userImages', []);
     const allImages = [...PlaceHolderImages, ...userImages];
     const coffeeJourneyImage: ImagePlaceholder | undefined = allImages.find(p => p.id === 'coffee-journey-alt');

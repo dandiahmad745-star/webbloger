@@ -76,8 +76,8 @@ export type AllData = {
 }
 
 
-export const staticData = {
-    mainPage: {
+export const defaultData = {
+    mainPageData: {
         name: "Arul Faathir",
         tagline: "Secangkir Semangat, Sejuta Cerita",
         bio: "Menjelajahi dunia rasa dari biji kopi pilihan. Temukan cerita di setiap cangkir dan mari nikmati perjalanan aromatik ini bersama.",
@@ -89,7 +89,7 @@ export const staticData = {
         },
         profileImageId: "profile-picture",
     } as MainPageData,
-    kisahSaya: {
+    kisahSayaData: {
         title: "Kisah Saya",
         description: "Perjalanan Pribadi dalam Dunia Kopi",
         imageId: "barista-story",
@@ -99,7 +99,7 @@ export const staticData = {
             "Melalui \"BioLink Elegance\" ini, saya ingin berbagi sebagian kecil dari perjalanan itu dengan Anda. Setiap tautan adalah sebuah bab dari cerita saya, sebuah undangan untuk menjelajahi dunia kopi melalui mata saya. Terima kasih telah menjadi bagian dari kisah ini."
         ]
     } as KisahSayaData,
-    utensils: {
+    utensilsData: {
         title: "Coffee Utensils",
         description: "Peralatan untuk Secangkir Kopi Sempurna",
         imageId: "coffee-utensils",
@@ -109,12 +109,7 @@ export const staticData = {
             { name: "French Press", description: "Metode rendam yang menghasilkan kopi dengan body penuh dan tekstur yang kaya.", icon: "Droplets" },
         ] as Utensil[]
     } as UtensilsData,
-    pesanRahasia: {
-        title: "Pesan Rahasia",
-        message: "Ini adalah pesan rahasia. Hanya untuk mata Anda.",
-        imageId: "profile-picture",
-    },
-    playlistSaya: [
+    playlistSayaData: [
         {
             id: "playlist-pagi-semangat-1",
             title: "Playlist Pagi Semangat",
@@ -123,7 +118,7 @@ export const staticData = {
             songs: [] as Song[],
         }
     ] as Playlist[],
-    resepKopi: [
+    resepKopiData: [
         {
             id: 'espresso-sempurna',
             name: 'Espresso Sempurna',
@@ -147,7 +142,7 @@ export const staticData = {
             description: 'Proses fermentasi unik yang menghasilkan aroma dan rasa seperti anggur.',
             taste: 'Kompleks, fruity, dengan sedikit rasa anggur',
             aroma: 'Fruity, wangi, seperti anggur merah',
-            category: 'Gayo, Indonesia',
+            category: 'Aceh, Indonesia',
             beansUsed: 'Biji Arabica Gayo (Proses Wine)',
             instructions: [
               'Siapkan 15 gram biji kopi Gayo Wine.',
@@ -172,7 +167,26 @@ export const staticData = {
             question: 'Metode seduh apa yang cocok untuk pemula?',
             answer: 'French Press adalah titik awal yang bagus karena prosesnya sederhana dan tidak memerlukan banyak peralatan khusus. V60 juga populer untuk pemula yang ingin mengeksplorasi metode pour-over, karena memberikan kontrol lebih besar atas hasil akhir.'
         }
-    ] as FAQItem[]
+    ] as FAQItem[],
+    coffeeBeansData: [
+        {
+          id: 'gayo-aceh',
+          name: 'Gayo Aceh',
+          origin: 'Aceh, Indonesia',
+          type: 'Arabica',
+          description: 'Dikenal dengan body yang kuat, keasaman seimbang, dan sentuhan rasa rempah, cokelat, serta buah-buahan.',
+          rating: 5,
+          imageId: 'gayo-beans'
+        },
+        {
+          id: 'kintamani-bali',
+          name: 'Kintamani Bali',
+          origin: 'Bali, Indonesia',
+          type: 'Arabica',
+          description: 'Memiliki karakter rasa yang segar dan fruity, terutama aroma jeruk dengan tingkat keasaman yang cerah dan bersih.',
+          rating: 4,
+          imageId: 'kintamani-beans'
+        }
+    ] as any[],
+    userImages: [] as any[]
 }
-
-    

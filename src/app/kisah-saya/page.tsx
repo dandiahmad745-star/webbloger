@@ -5,11 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import { staticData } from "../data-statis";
+import { defaultData } from "../data-statis";
 import { fetchServerData } from "@/lib/api";
 
 export default async function KisahSayaPage() {
-    const pageData = await fetchServerData('kisahSayaData', staticData.kisahSaya);
+    const pageData = await fetchServerData('kisahSayaData', defaultData.kisahSayaData);
     // User images are stored in a separate blob, so we fetch them too.
     const userImages = await fetchServerData('userImages', []);
     const allImages = [...PlaceHolderImages, ...userImages];

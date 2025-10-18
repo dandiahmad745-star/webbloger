@@ -6,29 +6,40 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, ChefHat } from "lucide-react";
 import Link from "next/link";
-import { staticData, type CoffeeRecipe } from "../data-statis";
+import { defaultData, type CoffeeRecipe } from "../data-statis";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import { Badge } from '@/components/ui/badge';
 import { RecipeFilterProvider, RecipeFilterDropdown, useFilter } from './recipe-filter';
 import { fetchServerData } from "@/lib/api";
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
+import useSWR from "swr";
+import { fetcher } from "@/lib/api";
 
-// This is the Client Component that handles filtering and display logic.
-// It uses the useFilter hook, which relies on useSearchParams.
-function RecipePageClient({ allRecipes, allImages, authorName }: { allRecipes: CoffeeRecipe[], allImages: ImagePlaceholder[], authorName: string }) {
+function RecipePageClient({ initialRecipes, initialImages, initialMainPageData }: { initialRecipes: CoffeeRecipe[], initialImages: ImagePlaceholder[], initialMainPageData: any }) {
+    const { data: allRecipes, error: recipesError } = useSWR('/api/data?key=resepKopiData', fetcher, { fallbackData: initialRecipes });
+    const { data: userImages, error: imagesError } = useSWR('/api/data?key=userImages', fetcher, { fallbackData: initialImages.filter(img => img.id.startsWith('user-')) });
+    const { data: mainPageData, error: mainPageError } = useSWR('/api/data?key=mainPageData', fetcher, { fallbackData: initialMainPageData });
     const { filter } = useFilter();
 
-    const filteredRecipes = filter === 'Semua'
-        ? allRecipes
-        : allRecipes.filter(recipe => recipe.category.includes(filter));
+    const allImages = React.useMemo(() => [...PlaceHolderImages, ...(userImages || [])], [userImages]);
 
+    const filteredRecipes = React.useMemo(() => {
+        if (!allRecipes) return [];
+        return filter === 'Semua'
+            ? allRecipes
+            : allRecipes.filter(recipe => recipe.category.includes(filter));
+    }, [allRecipes, filter]);
+
+    if (!allRecipes || !mainPageData) return <div className="text-center p-12">Memuat resep...</div>;
+    if (recipesError || imagesError || mainPageError) return <div className="text-center p-12 text-destructive">Gagal memuat resep.</div>;
+    
     return (
         <div className="p-8 md:p-12 -mt-16">
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredRecipes.map((recipe) => {
                     const recipeImage = allImages.find(p => p.id === recipe.imageId);
-                    return <RecipeCard key={recipe.id} recipe={recipe} image={recipeImage} authorName={authorName} />;
+                    return <RecipeCard key={recipe.id} recipe={recipe} image={recipeImage} authorName={mainPageData.name} />;
                 })}
                 {filteredRecipes.length === 0 && (
                     <div className="md:col-span-2 lg:col-span-3 text-center py-16">
@@ -43,7 +54,7 @@ function RecipePageClient({ allRecipes, allImages, authorName }: { allRecipes: C
 const RecipeCard = ({ recipe, image, authorName }: { recipe: CoffeeRecipe, image?: ImagePlaceholder, authorName: string }) => (
     <Link href={`/resep-kopi/${recipe.id}`} passHref>
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg hover:shadow-primary/10 transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-full group hover:-translate-y-1">
-            {image && (
+            {image ? (
                 <CardHeader className="p-0 relative h-48">
                     <Image
                         src={image.imageUrl}
@@ -53,7 +64,7 @@ const RecipeCard = ({ recipe, image, authorName }: { recipe: CoffeeRecipe, image
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                 </CardHeader>
-            )}
+            ) : <Skeleton className="h-48 w-full"/>}
             <CardContent className="p-6 flex flex-col flex-grow">
                 <Badge variant="secondary" className="w-fit mb-2">{recipe.category}</Badge>
                 <CardTitle className="font-headline text-2xl text-primary mb-2">{recipe.name}</CardTitle>
@@ -70,13 +81,30 @@ const RecipeCard = ({ recipe, image, authorName }: { recipe: CoffeeRecipe, image
 
 // This is the main Server Component for the page.
 // It fetches data and sets up the Suspense boundaries.
-export default async function ResepKopiPage() {
-    // Fetch all data on the server.
-    const allRecipes = await fetchServerData('resepKopiData', staticData.resepKopi);
-    const userImages = await fetchServerData('userImages', []);
-    const allImages = [...PlaceHolderImages, ...userImages];
-    const mainPageData = await fetchServerData('mainPageData', staticData.mainPage);
-    const pageImage: ImagePlaceholder | undefined = allImages.find(p => p.id === 'coffee-journey-alt');
+export default function ResepKopiPageWrapper() {
+    return (
+        <Suspense fallback={<div className="min-h-screen w-full bg-background text-center p-12">Memuat halaman resep...</div>}>
+            <RecipeFilterProvider>
+                <ResepKopiPage />
+            </RecipeFilterProvider>
+        </Suspense>
+    );
+}
+
+function ResepKopiPage() {
+    const { data: allRecipes, error: recipesError } = useSWR('/api/data?key=resepKopiData', fetcher, { fallbackData: defaultData.resepKopiData });
+    const { data: userImages, error: imagesError } = useSWR('/api/data?key=userImages', fetcher, { fallbackData: [] });
+    const { data: mainPageData, error: mainPageError } = useSWR('/api/data?key=mainPageData', fetcher, { fallbackData: defaultData.mainPageData });
+
+    const pageImage: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === 'coffee-journey-alt');
+
+    if (recipesError || imagesError || mainPageError) {
+        return <div>Gagal memuat data awal.</div>
+    }
+     if (!allRecipes || !userImages || !mainPageData) {
+        return <div className="min-h-screen w-full bg-background text-center p-12">Memuat...</div>
+    }
+
 
     return (
          <main className="min-h-screen w-full bg-background text-foreground fade-in">
@@ -107,23 +135,17 @@ export default async function ResepKopiPage() {
                                     Temukan inspirasi dan panduan untuk menciptakan secangkir kopi sempurna versi Anda.
                                 </p>
                             </div>
-                            {/* The Suspense boundary MUST wrap the provider and any component that uses its context. */}
-                            <Suspense fallback={<Skeleton className="h-10 w-32" />}>
-                                <RecipeFilterProvider>
-                                    <RecipeFilterDropdown />
-                                </RecipeFilterProvider>
-                            </Suspense>
+                            <RecipeFilterDropdown />
                         </div>
                     </div>
                 </div>
             </div>
             
-            {/* The main content is also wrapped in Suspense, with the provider. */}
-            <Suspense fallback={<div className="text-center p-12">Memuat resep...</div>}>
-                <RecipeFilterProvider>
-                     <RecipePageClient allRecipes={allRecipes} allImages={allImages} authorName={mainPageData.name} />
-                </RecipeFilterProvider>
-            </Suspense>
+            <RecipePageClient 
+                initialRecipes={allRecipes} 
+                initialImages={userImages}
+                initialMainPageData={mainPageData}
+            />
         </main>
     );
 };

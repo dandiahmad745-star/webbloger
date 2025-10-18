@@ -4,14 +4,14 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Coffee, BookOpen, Utensils, Mail, Sparkles, ClipboardList, HelpCircle, Music } from "lucide-react";
-import { useSWRConfig } from 'swr';
+import useSWR from 'swr';
 
 import { LoadingScreen } from "@/components/loading-screen";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import Link from "next/link";
-import { staticData } from "./data-statis";
+import { defaultData, type MainPageData } from "./data-statis";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
@@ -41,35 +41,20 @@ const FloatingParticles = () => {
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [profilePic, setProfilePic] = useState<ImagePlaceholder | undefined>(PlaceHolderImages.find(p => p.id === 'profile-picture'));
-  const [pageData, setPageData] = useState(staticData.mainPage);
-  const { cache } = useSWRConfig();
+
+  const { data: pageData, error: pageDataError } = useSWR<MainPageData>('/api/data?key=mainPageData', fetcher, { fallbackData: defaultData.mainPageData });
+  const { data: userImages, error: userImagesError } = useSWR<ImagePlaceholder[]>('/api/data?key=userImages', fetcher, { fallbackData: [] });
 
   useEffect(() => {
-    async function loadInitialData() {
-      try {
-        let mainPage = cache.get('/api/data?key=mainPageData')?.data || await fetcher('/api/data?key=mainPageData');
-        if (!mainPage) mainPage = staticData.mainPage;
-        
-        let userImages = cache.get('/api/data?key=userImages')?.data || await fetcher('/api/data?key=userImages');
-        if (!userImages) userImages = [];
-
+    if (pageData && userImages) {
         const allImages = [...PlaceHolderImages, ...userImages];
-        
-        setPageData(mainPage);
-        const pic = allImages.find(p => p.id === (mainPage.profileImageId || 'profile-picture'));
+        const pic = allImages.find(p => p.id === (pageData.profileImageId || 'profile-picture'));
         setProfilePic(pic);
-      } catch (e) {
-        console.error("Failed to load from API, falling back to static data", e);
-        setPageData(staticData.mainPage);
-        setProfilePic(PlaceHolderImages.find(p => p.id === 'profile-picture'));
-      } finally {
         const loadingTimer = setTimeout(() => setIsLoading(false), 1000);
         return () => clearTimeout(loadingTimer);
-      }
     }
-    loadInitialData();
-  }, [cache]);
-
+  }, [pageData, userImages]);
+  
   const socialLinks = [
     { name: "Learn Coffee", description: "Jelajahi berbagai jenis biji kopi.", url: "/learn-coffee", icon: Coffee },
     { name: "Resep Kopi", description: "Ciptakan kopi spesial Anda sendiri.", url: "/resep-kopi", icon: ClipboardList },
@@ -77,11 +62,15 @@ export default function Home() {
     { name: "Kisah Saya", description: "Perjalanan saya dalam dunia kopi.", url: "/kisah-saya", icon: BookOpen },
     { name: "Peralatan Kopi", description: "Alat-alat untuk secangkir kopi sempurna.", url: "/learn-coffee-utensils", icon: Utensils },
     { name: "Playlist Saya", description: "Lagu-lagu yang menemani secangkir kopi.", url: "/playlist-saya", icon: Music },
-    { name: "Hubungi Saya", description: "Kirimkan saya email untuk kolaborasi.", url: `mailto:${pageData.contactEmail}`, icon: Mail },
+    { name: "Hubungi Saya", description: "Kirimkan saya email untuk kolaborasi.", url: `mailto:${pageData?.contactEmail}`, icon: Mail },
   ];
 
-  if (isLoading) {
+  if (isLoading || !pageData) {
     return <LoadingScreen onLoaded={() => setIsLoading(false)} />;
+  }
+  
+  if (pageDataError || userImagesError) {
+      console.error("Failed to load from API, falling back to static data");
   }
 
   return (

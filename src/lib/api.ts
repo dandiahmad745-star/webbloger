@@ -1,13 +1,20 @@
 
-export const fetcher = (url: string) => fetch(url).then(res => {
-    if (!res.ok) {
-        throw new Error('An error occurred while fetching the data.');
-    }
-    return res.json();
-});
+export const fetcher = (url: string) => {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+    const absoluteUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+    
+    return fetch(absoluteUrl).then(res => {
+        if (!res.ok) {
+            console.error(`Failed to fetch ${absoluteUrl}`, { status: res.status, statusText: res.statusText });
+            throw new Error('An error occurred while fetching the data.');
+        }
+        return res.json();
+    });
+};
 
 export const postData = async (key: string, data: any) => {
-    const res = await fetch(`/api/data?key=${key}`, {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+    const res = await fetch(`${baseUrl}/api/data?key=${key}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -28,8 +35,6 @@ export const fetchServerData = async <T>(key: string, fallback: T): Promise<T> =
         const baseUrl = process.env.URL || process.env.NEXT_PUBLIC_BASE_URL;
 
         if (!baseUrl) {
-             // In a build environment (like Netlify), there might be no base URL.
-             // In this case, we rely on the static fallback.
             console.warn(`Base URL not found for '${key}'. Using fallback data for build.`);
             return fallback;
         }

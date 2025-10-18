@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Coffee, Feather, Globe, Wind } from "lucide-react";
 import Link from "next/link";
-import { staticData, type CoffeeRecipe } from "../../data-statis";
+import { defaultData, type CoffeeRecipe } from "../../data-statis";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,7 @@ export default async function RecipeDetailPage({ params }: { params: { id: strin
     const { id } = params;
     if (!id) notFound();
 
-    const allRecipes = await fetchServerData('resepKopiData', staticData.resepKopi);
+    const allRecipes = await fetchServerData('resepKopiData', defaultData.resepKopiData);
     const recipe: CoffeeRecipe | undefined = allRecipes.find((r: CoffeeRecipe) => r.id === id);
 
     if (!recipe) {
