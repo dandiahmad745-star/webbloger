@@ -10,13 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
+import Link from "next/link";
 
 const socialLinks = [
-  { name: "Learn Coffee", url: "#", icon: Coffee },
-  { name: "Kisah Saya", url: "#", icon: BookOpen },
-  { name: "learn coffee utensils", url: "#", icon: Utensils },
+  { name: "Learn Coffee", url: "/learn-coffee", icon: Coffee },
+  { name: "Kisah Saya", url: "/kisah-saya", icon: BookOpen },
+  { name: "learn coffee utensils", url: "/learn-coffee-utensils", icon: Utensils },
   { name: "Hubungi Saya", url: "mailto:halo@kopi.com", icon: Mail },
-  { name: "Ngobrol", url: "#", icon: MessageCircle },
+  { name: "Ngobrol", url: "/ngobrol", icon: MessageCircle },
 ];
 
 export default function Home() {
@@ -59,23 +60,40 @@ export default function Home() {
             <div className="flex flex-col space-y-4">
               {socialLinks.map((link) => {
                 const Icon = link.icon;
+                const isExternal = link.url.startsWith('mailto:');
+
+                if (isExternal) {
+                  return (
+                    <a
+                      key={link.name}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full"
+                    >
+                      <Button
+                        variant="default"
+                        className="w-full justify-start h-14 text-lg bg-primary/90 hover:bg-primary text-primary-foreground transition-all duration-300 ease-in-out transform hover:scale-[1.03] shadow-md hover:shadow-lg hover:shadow-accent/20"
+                        aria-label={`Visit my ${link.name}`}
+                      >
+                        <Icon className="mr-4 h-6 w-6" />
+                        <span>{link.name}</span>
+                      </Button>
+                    </a>
+                  );
+                }
+
                 return (
-                  <a
-                    key={link.name}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full"
-                  >
+                  <Link key={link.name} href={link.url} passHref className="w-full">
                     <Button
                       variant="default"
                       className="w-full justify-start h-14 text-lg bg-primary/90 hover:bg-primary text-primary-foreground transition-all duration-300 ease-in-out transform hover:scale-[1.03] shadow-md hover:shadow-lg hover:shadow-accent/20"
-                      aria-label={`Visit my ${link.name}`}
+                      aria-label={`Go to ${link.name}`}
                     >
                       <Icon className="mr-4 h-6 w-6" />
                       <span>{link.name}</span>
                     </Button>
-                  </a>
+                  </Link>
                 );
               })}
             </div>

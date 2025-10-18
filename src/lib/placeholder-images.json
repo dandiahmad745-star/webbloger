@@ -5,6 +5,24 @@
       "description": "Secangkir kopi artistik dengan latar yang hangat.",
       "imageUrl": "https://images.unsplash.com/photo-1559496417-e7f25cb247f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjoffeeJTIwY3VwfGVufDB8fHx8MTc2MDc1Mzc1OXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "coffee cup"
+    },
+    {
+      "id": "coffee-journey",
+      "description": "Biji kopi yang tersebar di atas meja kayu.",
+      "imageUrl": "https://images.unsplash.com/photo-1495474472287-4d713b20e5e3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjoffeeJTIwYmVhbnN8ZW58MHx8fHwxNzYwNzUzODEyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "coffee beans"
+    },
+    {
+      "id": "barista-story",
+      "description": "Seorang barista sedang menuangkan latte art.",
+      "imageUrl": "https://images.unsplash.com/photo-1511920170033-f832d72d7353?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxiYXJpc3RhfGVufDB8fHx8MTc2MDc1Mzg0Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "barista pouring"
+    },
+    {
+      "id": "coffee-utensils",
+      "description": "Berbagai macam peralatan kopi di atas meja.",
+      "imageUrl": "https://images.unsplash.com/photo-1528699633785-3431206f3569?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjB1dGVuc2lsc3xlbnwwfHx8fDE3NjA3NTM4NzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "coffee equipment"
     }
   ]
 }
