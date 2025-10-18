@@ -12,7 +12,7 @@ import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-imag
 
 const socialLinks = [
   { name: "Learn Coffee", url: "#", icon: Coffee },
-  { name: "Kisah Kami", url: "#", icon: BookOpen },
+  { name: "Kisah Saya", url: "#", icon: BookOpen },
   { name: "Kunjungi Kafe", url: "#", icon: Store },
   { name: "Hubungi Kami", url: "mailto:halo@kopi.com", icon: Mail },
   { name: "Ngobrol", url: "#", icon: MessageCircle },
