@@ -257,20 +257,27 @@ export default function AdminResepKopiPage() {
                     const importedRecipes = JSON.parse(text);
 
                     if (Array.isArray(importedRecipes) && importedRecipes.every(item => 'id' in item && 'name' in item)) {
-                        // Combine existing recipes with imported ones
+                        
                         const updatedRecipes = [...recipesData];
+                        let newRecipesCount = 0;
                         
                         importedRecipes.forEach((newRecipe: CoffeeRecipe) => {
-                            // Check for duplicates by name or id to avoid adding the same recipe twice
                             const isDuplicate = updatedRecipes.some(existingRecipe => existingRecipe.id === newRecipe.id || existingRecipe.name === newRecipe.name);
                             if (!isDuplicate) {
                                 updatedRecipes.push(newRecipe);
+                                newRecipesCount++;
                             }
                         });
 
                         setRecipesData(updatedRecipes);
                         localStorage.setItem('resepKopiData', JSON.stringify(updatedRecipes));
-                        toast({ title: "Impor Berhasil", description: "Resep baru telah ditambahkan." });
+
+                        if (newRecipesCount > 0) {
+                            toast({ title: "Impor Berhasil", description: `${newRecipesCount} resep baru telah ditambahkan.` });
+                        } else {
+                            toast({ title: "Tidak Ada Resep Baru", description: "Semua resep dalam file sudah ada di koleksi Anda." });
+                        }
+
                     } else {
                         throw new Error("Invalid JSON format.");
                     }
@@ -380,3 +387,5 @@ export default function AdminResepKopiPage() {
         </Card>
     );
 }
+
+    
