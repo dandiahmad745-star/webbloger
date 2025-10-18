@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Github, Twitter, Linkedin, Globe, Mail } from "lucide-react";
+import { Coffee, BookOpen, Store, Mail, MessageCircle } from "lucide-react";
 
 import { LoadingScreen } from "@/components/loading-screen";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,11 @@ import { Separator } from "@/components/ui/separator";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 
 const socialLinks = [
-  { name: "GitHub", url: "#", icon: Github },
-  { name: "Twitter", url: "https://x.com", icon: Twitter },
-  { name: "LinkedIn", url: "#", icon: Linkedin },
-  { name: "Portfolio", url: "#", icon: Globe },
-  { name: "Email Me", url: "mailto:hello@example.com", icon: Mail },
+  { name: "Biji Kopi Kami", url: "#", icon: Coffee },
+  { name: "Kisah Kami", url: "#", icon: BookOpen },
+  { name: "Kunjungi Kafe", url: "#", icon: Store },
+  { name: "Hubungi Kami", url: "mailto:halo@kopi.com", icon: Mail },
+  { name: "Ngobrol", url: "#", icon: MessageCircle },
 ];
 
 export default function Home() {
@@ -44,15 +44,15 @@ export default function Home() {
               />
             )}
             <CardTitle className="font-headline text-3xl md:text-4xl text-primary">
-              Alex Doe
+              Dunia Kopi
             </CardTitle>
             <CardDescription className="font-body text-base md:text-lg text-foreground/80 pt-2">
-              Creative Developer & UI/UX Enthusiast
+              Secangkir Semangat, Sejuta Cerita
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 md:p-8 pt-0">
             <p className="text-center font-body text-foreground/90 mb-6">
-              Welcome to my digital space. Here you can find my work, social profiles, and ways to get in touch. Let&apos;s create something amazing together.
+              Menjelajahi dunia rasa dari biji kopi pilihan. Temukan cerita di setiap cangkir dan mari nikmati perjalanan aromatik ini bersama.
             </p>
             <Separator className="my-6 bg-primary/10" />
             <div className="flex flex-col space-y-4">
