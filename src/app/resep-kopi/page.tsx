@@ -10,8 +10,8 @@ import Link from "next/link";
 import { staticData as initialStaticData, type CoffeeRecipe } from "../data-statis";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { aseanRegions } from '@/lib/asean-regions';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from '@/components/ui/dropdown-menu';
+import { aseanCountries, otherRegions } from '@/lib/asean-regions';
 
 export default function ResepKopiPage() {
     const [allRecipes, setAllRecipes] = useState<CoffeeRecipe[]>(initialStaticData.resepKopi);
@@ -44,7 +44,7 @@ export default function ResepKopiPage() {
         if (filter === 'Semua') {
             setFilteredRecipes(allRecipes);
         } else {
-            setFilteredRecipes(allRecipes.filter(recipe => recipe.category === filter));
+            setFilteredRecipes(allRecipes.filter(recipe => recipe.category.includes(filter)));
         }
     }, [filter, allRecipes]);
 
@@ -54,7 +54,7 @@ export default function ResepKopiPage() {
         return null; // Or a loading spinner
     }
 
-    const uniqueCategories = ['Semua', ...Array.from(new Set(allRecipes.map(r => r.category)))];
+    const allCategories = ['Semua', ...otherRegions.map(r => r.name), ...aseanCountries.map(c => c.name)];
 
     return (
         <main className="min-h-screen w-full bg-background text-foreground fade-in">
@@ -95,11 +95,31 @@ export default function ResepKopiPage() {
                                 <DropdownMenuContent>
                                     <DropdownMenuLabel>Filter berdasarkan Wilayah</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    {uniqueCategories.map(cat => (
-                                        <DropdownMenuItem key={cat} onSelect={() => setFilter(cat)}>
-                                            {cat}
-                                        </DropdownMenuItem>
-                                    ))}
+                                    <DropdownMenuItem onSelect={() => setFilter('Semua')}>Semua</DropdownMenuItem>
+                                     <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger>ASEAN</DropdownMenuSubTrigger>
+                                        <DropdownMenuPortal>
+                                            <DropdownMenuSubContent>
+                                                {aseanCountries.map(country => (
+                                                    <DropdownMenuItem key={country.name} onSelect={() => setFilter(country.name)}>
+                                                        {country.name}
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuSubContent>
+                                        </DropdownMenuPortal>
+                                    </DropdownMenuSub>
+                                    <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger>Lainnya</DropdownMenuSubTrigger>
+                                         <DropdownMenuPortal>
+                                            <DropdownMenuSubContent>
+                                                {otherRegions.map(region => (
+                                                     <DropdownMenuItem key={region.name} onSelect={() => setFilter(region.name)}>
+                                                        {region.name}
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuSubContent>
+                                        </DropdownMenuPortal>
+                                    </DropdownMenuSub>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>

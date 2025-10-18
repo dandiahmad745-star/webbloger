@@ -15,14 +15,18 @@ import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-imag
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { aseanRegions } from "@/lib/asean-regions";
+import { aseanCountries, otherRegions, type Country, type City } from "@/lib/asean-regions";
 
 export default function AdminResepKopiPage() {
     const { toast } = useToast();
     const [recipesData, setRecipesData] = useState<CoffeeRecipe[]>(initialStaticData.resepKopi);
     const [isClient, setIsClient] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('');
+    
+    // State for chained dropdown
+    const [selectedCountry, setSelectedCountry] = useState('');
+    const [selectedCity, setSelectedCity] = useState('');
+    const [availableCities, setAvailableCities] = useState<City[]>([]);
 
     useEffect(() => {
         setIsClient(true);
@@ -34,17 +38,39 @@ export default function AdminResepKopiPage() {
         }
     }, []);
 
+    // Effect for chained dropdown
+    useEffect(() => {
+        if (selectedCountry) {
+            const countryData = aseanCountries.find(c => c.name === selectedCountry);
+            setAvailableCities(countryData?.cities || []);
+        } else {
+            setAvailableCities([]);
+        }
+        setSelectedCity('');
+    }, [selectedCountry]);
+
+    const resetCategorySelection = () => {
+        setSelectedCountry('');
+        setSelectedCity('');
+        setAvailableCities([]);
+    }
+
     const handleSaveRecipe = (e: React.FormEvent<HTMLFormElement>, recipeId?: string) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         
+        let category = '';
+        if(selectedCountry){
+            category = selectedCity ? `${selectedCity}, ${selectedCountry}` : selectedCountry;
+        }
+
         const newRecipeData: CoffeeRecipe = {
             id: recipeId || `resep-${Date.now()}`,
             name: formData.get('name') as string,
             description: formData.get('description') as string,
             taste: formData.get('taste') as string,
             aroma: formData.get('aroma') as string,
-            category: selectedCategory || (recipeId ? recipesData.find(r => r.id === recipeId)?.category || '' : ''),
+            category: category,
             beansUsed: formData.get('beansUsed') as string,
             instructions: (formData.get('instructions') as string).split('\n'),
             imageId: selectedImage || (recipeId ? recipesData.find(r => r.id === recipeId)?.imageId || '' : ''),
@@ -64,7 +90,7 @@ export default function AdminResepKopiPage() {
         const closeBtnId = recipeId ? `close-recipe-${recipeId}-dialog` : 'close-recipe-new-dialog';
         document.getElementById(closeBtnId)?.click();
         setSelectedImage('');
-        setSelectedCategory('');
+        resetCategorySelection();
     };
 
     const handleDeleteRecipe = (recipeId: string) => {
@@ -152,11 +178,21 @@ export default function AdminResepKopiPage() {
     }
 
     const RecipeForm = ({ recipe, onSubmit, closeBtnId }: { recipe?: CoffeeRecipe, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => {
+        
         useEffect(() => {
             if (recipe?.category) {
-                setSelectedCategory(recipe.category);
+                const parts = recipe.category.split(', ');
+                if (parts.length > 1) {
+                    setSelectedCity(parts[0]);
+                    setSelectedCountry(parts[1]);
+                    const countryData = aseanCountries.find(c => c.name === parts[1]);
+                    setAvailableCities(countryData?.cities || []);
+                } else {
+                    setSelectedCountry(parts[0]);
+                    setAvailableCities([]);
+                }
             } else {
-                setSelectedCategory('');
+                resetCategorySelection();
             }
         }, [recipe]);
 
@@ -165,31 +201,38 @@ export default function AdminResepKopiPage() {
             <div className="space-y-1"><Label htmlFor="name">Nama Resep</Label><Input id="name" name="name" defaultValue={recipe?.name} required /></div>
             <div className="space-y-1"><Label htmlFor="description">Deskripsi Singkat</Label><Textarea id="description" name="description" defaultValue={recipe?.description} required rows={2} /></div>
             
-            <div className="space-y-1">
-                <Label htmlFor="category">Asal / Kategori</Label>
-                <Select name="category" onValueChange={setSelectedCategory} defaultValue={recipe?.category}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Pilih negara atau kota..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            <SelectLabel>Lainnya</SelectLabel>
-                            <SelectItem value="Italia">Italia</SelectItem>
-                        </SelectGroup>
-                        <SelectGroup>
-                            <SelectLabel>Negara ASEAN</SelectLabel>
-                            {aseanRegions.filter(r => !r.isCity).map(region => (
-                                <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
-                            ))}
-                        </SelectGroup>
-                        <SelectGroup>
-                            <SelectLabel>Kota di ASEAN</SelectLabel>
-                             {aseanRegions.filter(r => r.isCity).map(region => (
-                                <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
-                            ))}
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
+             <div className="space-y-2">
+                <Label>Asal / Kategori</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Select onValueChange={setSelectedCountry} value={selectedCountry}>
+                        <SelectTrigger><SelectValue placeholder="Pilih negara..." /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Negara ASEAN</SelectLabel>
+                                {aseanCountries.map(country => (
+                                    <SelectItem key={country.name} value={country.name}>{country.name}</SelectItem>
+                                ))}
+                            </SelectGroup>
+                            <SelectGroup>
+                                <SelectLabel>Lainnya</SelectLabel>
+                                 {otherRegions.map(region => (
+                                    <SelectItem key={region.name} value={region.name}>{region.name}</SelectItem>
+                                ))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    <Select onValueChange={setSelectedCity} value={selectedCity} disabled={availableCities.length === 0}>
+                        <SelectTrigger><SelectValue placeholder="Pilih kota..." /></SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Kota di {selectedCountry}</SelectLabel>
+                                {availableCities.map(city => (
+                                    <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
+                                ))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -206,6 +249,32 @@ export default function AdminResepKopiPage() {
         </form>
     )};
 
+    const handleDialogOpening = (open: boolean, recipe?: CoffeeRecipe) => {
+        if (open) {
+            if (recipe) {
+                setSelectedImage(recipe.imageId);
+                 if (recipe.category) {
+                    const parts = recipe.category.split(', ');
+                    const countryName = parts.length > 1 ? parts[1] : parts[0];
+                    const cityName = parts.length > 1 ? parts[0] : '';
+                    setSelectedCountry(countryName);
+                    const countryData = aseanCountries.find(c => c.name === countryName);
+                    setAvailableCities(countryData?.cities || []);
+                    setSelectedCity(cityName);
+                } else {
+                    resetCategorySelection();
+                }
+            } else {
+                setSelectedImage('');
+                resetCategorySelection();
+            }
+        } else {
+             setSelectedImage('');
+             resetCategorySelection();
+        }
+    }
+
+
     return (
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg w-full">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -213,7 +282,7 @@ export default function AdminResepKopiPage() {
                     <CardTitle>Kelola Resep Kopi</CardTitle>
                     <CardDescription>Tambah, edit, atau hapus resep untuk halaman "Resep Kopi".</CardDescription>
                 </div>
-                <Dialog onOpenChange={(open) => { if(!open) { setSelectedImage(''); setSelectedCategory(''); } }}>
+                <Dialog onOpenChange={(open) => handleDialogOpening(open)}>
                     <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Resep</Button></DialogTrigger>
                     <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Tambah Resep Baru</DialogTitle></DialogHeader><RecipeForm onSubmit={(e) => handleSaveRecipe(e)} closeBtnId="close-recipe-new-dialog" /></DialogContent>
                 </Dialog>
@@ -221,9 +290,12 @@ export default function AdminResepKopiPage() {
             <CardContent className="space-y-4">
                 {recipesData.map(recipe => (
                     <div key={recipe.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <p className="font-medium">{recipe.name}</p>
+                        <div>
+                            <p className="font-medium">{recipe.name}</p>
+                            <p className="text-sm text-muted-foreground">{recipe.category}</p>
+                        </div>
                         <div className="flex items-center gap-2">
-                            <Dialog onOpenChange={(open) => { if(open) { setSelectedImage(recipe.imageId); setSelectedCategory(recipe.category); } else { setSelectedImage(''); setSelectedCategory(''); } }}>
+                            <Dialog onOpenChange={(open) => handleDialogOpening(open, recipe)}>
                                 <DialogTrigger asChild><Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button></DialogTrigger>
                                 <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Edit {recipe.name}</DialogTitle></DialogHeader><RecipeForm recipe={recipe} onSubmit={(e) => handleSaveRecipe(e, recipe.id)} closeBtnId={`close-recipe-${recipe.id}-dialog`} /></DialogContent>
                             </Dialog>

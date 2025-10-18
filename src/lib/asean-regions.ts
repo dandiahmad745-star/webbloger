@@ -1,34 +1,115 @@
 
-export const aseanRegions = [
-    // Negara
-    { value: 'Brunei', label: 'Brunei', isCity: false },
-    { value: 'Kamboja', label: 'Kamboja', isCity: false },
-    { value: 'Indonesia', label: 'Indonesia', isCity: false },
-    { value: 'Laos', label: 'Laos', isCity: false },
-    { value: 'Malaysia', label: 'Malaysia', isCity: false },
-    { value: 'Myanmar', label: 'Myanmar', isCity: false },
-    { value: 'Filipina', label: 'Filipina', isCity: false },
-    { value: 'Singapura', label: 'Singapura', isCity: false },
-    { value: 'Thailand', label: 'Thailand', isCity: false },
-    { value: 'Vietnam', label: 'Vietnam', isCity: false },
-    // Kota di Indonesia
-    { value: 'Aceh', label: 'Aceh, Indonesia', isCity: true },
-    { value: 'Bali', label: 'Bali, Indonesia', isCity: true },
-    { value: 'Flores', label: 'Flores, Indonesia', isCity: true },
-    { value: 'Jawa', label: 'Jawa, Indonesia', isCity: true },
-    { value: 'Lampung', label: 'Lampung, Indonesia', isCity: true },
-    { value: 'Medan', label: 'Medan, Indonesia', isCity: true },
-    { value: 'Toraja', label: 'Toraja, Indonesia', isCity: true },
-    // Kota di Malaysia
-    { value: 'Kuala Lumpur', label: 'Kuala Lumpur, Malaysia', isCity: true },
-    { value: 'Penang', label: 'Penang, Malaysia', isCity: true },
-    // Kota di Filipina
-    { value: 'Manila', label: 'Manila, Filipina', isCity: true },
-    // Kota di Thailand
-    { value: 'Bangkok', label: 'Bangkok, Thailand', isCity: true },
-    { value: 'Chiang Mai', label: 'Chiang Mai, Thailand', isCity: true },
-    // Kota di Vietnam
-    { value: 'Da Lat', label: 'Da Lat, Vietnam', isCity: true },
-    { value: 'Hanoi', label: 'Hanoi, Vietnam', isCity: true },
-    { value: 'Ho Chi Minh City', label: 'Ho Chi Minh City, Vietnam', isCity: true },
+export type City = {
+    name: string;
+};
+
+export type Country = {
+    name: string;
+    cities: City[];
+};
+
+export const aseanCountries: Country[] = [
+    {
+        name: 'Brunei',
+        cities: [
+            { name: 'Bandar Seri Begawan' },
+            { name: 'Kuala Belait' },
+            { name: 'Seria' },
+            { name: 'Tutong' },
+        ],
+    },
+    {
+        name: 'Kamboja',
+        cities: [
+            { name: 'Phnom Penh' },
+            { name: 'Siem Reap' },
+            { name: 'Sihanoukville' },
+            { name: 'Battambang' },
+        ],
+    },
+    {
+        name: 'Indonesia',
+        cities: [
+            { name: 'Aceh' },
+            { name: 'Bali' },
+            { name: 'Bandung' },
+            { name: 'Flores' },
+            { name: 'Jakarta' },
+            { name: 'Jawa' },
+            { name: 'Lampung' },
+            { name: 'Medan' },
+            { name: 'Surabaya' },
+            { name: 'Toraja' },
+            { name: 'Yogyakarta' },
+        ],
+    },
+    {
+        name: 'Laos',
+        cities: [
+            { name: 'Vientiane' },
+            { name: 'Luang Prabang' },
+            { name: 'Pakse' },
+            { name: 'Savannakhet' },
+        ],
+    },
+    {
+        name: 'Malaysia',
+        cities: [
+            { name: 'Kuala Lumpur' },
+            { name: 'Penang' },
+            { name: 'Johor Bahru' },
+            { name: 'Ipoh' },
+            { name: 'Malaka' },
+        ],
+    },
+    {
+        name: 'Myanmar',
+        cities: [
+            { name: 'Yangon' },
+            { name: 'Mandalay' },
+            { name: 'Naypyidaw' },
+        ],
+    },
+    {
+        name: 'Filipina',
+        cities: [
+            { name: 'Manila' },
+            { name: 'Cebu' },
+            { name: 'Davao' },
+        ],
+    },
+    {
+        name: 'Singapura',
+        cities: [
+            { name: 'Singapura' }
+        ],
+    },
+    {
+        name: 'Thailand',
+        cities: [
+            { name: 'Bangkok' },
+            { name: 'Chiang Mai' },
+            { name: 'Phuket' },
+            { name: 'Pattaya' },
+        ],
+    },
+    {
+        name: 'Vietnam',
+        cities: [
+            { name: 'Hanoi' },
+            { name: 'Ho Chi Minh City' },
+            { name: 'Da Nang' },
+            { name: 'Da Lat' },
+        ],
+    },
+    {
+        name: 'Timor-Leste',
+        cities: [
+            { name: 'Dili' }
+        ],
+    },
+];
+
+export const otherRegions = [
+    { name: 'Italia' }
 ];
