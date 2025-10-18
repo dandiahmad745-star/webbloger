@@ -43,10 +43,10 @@ export default function AdminResepKopiPage() {
         if (selectedCountry) {
             const countryData = aseanCountries.find(c => c.name === selectedCountry);
             setAvailableCities(countryData?.cities || []);
+            setSelectedCity(''); // Reset city when country changes
         } else {
             setAvailableCities([]);
         }
-        setSelectedCity('');
     }, [selectedCountry]);
 
     const resetCategorySelection = () => {
@@ -89,8 +89,6 @@ export default function AdminResepKopiPage() {
         
         const closeBtnId = recipeId ? `close-recipe-${recipeId}-dialog` : 'close-recipe-new-dialog';
         document.getElementById(closeBtnId)?.click();
-        setSelectedImage('');
-        resetCategorySelection();
     };
 
     const handleDeleteRecipe = (recipeId: string) => {
@@ -178,24 +176,6 @@ export default function AdminResepKopiPage() {
     }
 
     const RecipeForm = ({ recipe, onSubmit, closeBtnId }: { recipe?: CoffeeRecipe, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => {
-        
-        useEffect(() => {
-            if (recipe?.category) {
-                const parts = recipe.category.split(', ');
-                if (parts.length > 1) {
-                    setSelectedCity(parts[0]);
-                    setSelectedCountry(parts[1]);
-                    const countryData = aseanCountries.find(c => c.name === parts[1]);
-                    setAvailableCities(countryData?.cities || []);
-                } else {
-                    setSelectedCountry(parts[0]);
-                    setAvailableCities([]);
-                }
-            } else {
-                resetCategorySelection();
-            }
-        }, [recipe]);
-
         return (
         <form onSubmit={onSubmit} className="space-y-3 max-h-[70vh] overflow-y-auto p-1 pr-4">
             <div className="space-y-1"><Label htmlFor="name">Nama Resep</Label><Input id="name" name="name" defaultValue={recipe?.name} required /></div>
@@ -250,27 +230,30 @@ export default function AdminResepKopiPage() {
     )};
 
     const handleDialogOpening = (open: boolean, recipe?: CoffeeRecipe) => {
-        if (open) {
+        if (!open) {
+             resetCategorySelection();
+             setSelectedImage('');
+        } else {
             if (recipe) {
                 setSelectedImage(recipe.imageId);
                  if (recipe.category) {
                     const parts = recipe.category.split(', ');
                     const countryName = parts.length > 1 ? parts[1] : parts[0];
                     const cityName = parts.length > 1 ? parts[0] : '';
-                    setSelectedCountry(countryName);
                     const countryData = aseanCountries.find(c => c.name === countryName);
-                    setAvailableCities(countryData?.cities || []);
+                    
+                    setSelectedCountry(countryName);
+                    if(countryData) {
+                        setAvailableCities(countryData.cities || []);
+                    }
                     setSelectedCity(cityName);
                 } else {
                     resetCategorySelection();
                 }
             } else {
-                setSelectedImage('');
                 resetCategorySelection();
+                setSelectedImage('');
             }
-        } else {
-             setSelectedImage('');
-             resetCategorySelection();
         }
     }
 
