@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,104 @@ import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { themes, type Theme } from "@/lib/themes";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Paintbrush } from "lucide-react";
+import { Paintbrush, Upload } from "lucide-react";
+import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+
+const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
+    const [currentSelection, setCurrentSelection] = useState(currentImageId);
+    const [userImages, setUserImages] = useState<ImagePlaceholder[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const loadImages = () => {
+                try {
+                    const savedUserImages = localStorage.getItem('userImages');
+                    if (savedUserImages) {
+                        setUserImages(JSON.parse(savedUserImages));
+                    }
+                } catch (error) {
+                    console.error("Failed to parse user images from localStorage", error);
+                }
+            };
+            loadImages();
+            window.addEventListener('storage', loadImages);
+            return () => window.removeEventListener('storage', loadImages);
+        }
+    }, []);
+    
+    useEffect(() => {
+        setCurrentSelection(currentImageId);
+    }, [currentImageId]);
+
+    const handleSelect = (id: string) => {
+        setCurrentSelection(id);
+        onSelect(id);
+    }
+
+    const handleUploadClick = () => fileInputRef.current?.click();
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            if (file.size > 500 * 1024) { // 500KB limit
+                toast({
+                    variant: "destructive",
+                    title: "Ukuran file terlalu besar",
+                    description: "Ukuran gambar tidak boleh melebihi 500KB untuk menghemat ruang penyimpanan browser.",
+                });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target?.result as string;
+                const newImageId = `user-img-${Date.now()}`;
+                const newImage: ImagePlaceholder = { id: newImageId, imageUrl: dataUrl, description: file.name, imageHint: 'custom upload' };
+                
+                try {
+                    const existingImagesRaw = localStorage.getItem('userImages');
+                    const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
+                    const updatedUserImages = [...existingImages, newImage];
+
+                    setUserImages(updatedUserImages);
+                    localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
+                    handleSelect(newImageId);
+                    
+                    toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
+
+                    window.dispatchEvent(new Event('storage'));
+                } catch (error) {
+                     toast({
+                        variant: "destructive",
+                        title: "Penyimpanan Penuh",
+                        description: "Gagal menyimpan gambar. Penyimpanan lokal browser mungkin penuh. Coba gunakan gambar yang lebih kecil.",
+                    });
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    
+    const allImages = [...PlaceHolderImages, ...userImages];
+
+    return (
+        <div className="space-y-2">
+            <Label>Pilih Gambar Profil</Label>
+            <div className="grid grid-cols-4 md:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
+                {allImages.map(img => (
+                    <div key={img.id} className={cn("relative aspect-square rounded-md overflow-hidden cursor-pointer border-2", currentSelection === img.id ? 'border-primary' : 'border-transparent')} onClick={() => handleSelect(img.id)}>
+                        <Image src={img.imageUrl} alt={img.description} fill className="object-cover" />
+                    </div>
+                ))}
+            </div>
+             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+             <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}><Upload className="h-4 w-4 mr-2" />Unggah Foto (Maks 500KB)</Button>
+        </div>
+    )
+}
 
 const ThemeSwitcher = ({ currentTheme, onThemeChange }: { currentTheme: string, onThemeChange: (themeName: string) => void }) => {
   return (
@@ -44,6 +141,8 @@ export default function AdminPengaturanPage() {
     const [settingsData, setSettingsData] = useState(initialStaticData.mainPage);
     const [isClient, setIsClient] = useState(false);
     const [activeTheme, setActiveTheme] = useState('Kopi Gayo');
+    const [selectedImage, setSelectedImage] = useState(settingsData.profileImageId || 'profile-picture');
+
 
     useEffect(() => {
         setIsClient(true);
@@ -55,6 +154,7 @@ export default function AdminPengaturanPage() {
                     parsed.secretMessage = initialStaticData.mainPage.secretMessage;
                 }
                 setSettingsData(parsed);
+                setSelectedImage(parsed.profileImageId || 'profile-picture');
             }
             const savedTheme = localStorage.getItem('activeTheme');
             if (savedTheme) {
@@ -108,7 +208,8 @@ export default function AdminPengaturanPage() {
             secretMessage: {
                 title: formData.get('secretTitle') as string,
                 content: formData.get('secretContent') as string,
-            }
+            },
+            profileImageId: selectedImage
         };
         setSettingsData(updatedData);
         localStorage.setItem('mainPageData', JSON.stringify(updatedData));
@@ -143,7 +244,8 @@ export default function AdminPengaturanPage() {
                         <Label htmlFor="bio">Bio Singkat</Label>
                         <Textarea id="bio" name="bio" defaultValue={settingsData.bio} rows={3} />
                     </div>
-                    
+                     <ImagePicker currentImageId={selectedImage} onSelect={setSelectedImage} />
+
                     <h3 className="text-lg font-medium text-primary border-b pb-2 pt-4">Halaman Kontak & Ngobrol</h3>
                     <div className="space-y-2">
                         <Label htmlFor="contactEmail">Email Kontak (untuk tombol "Hubungi Saya")</Label>
@@ -173,3 +275,5 @@ export default function AdminPengaturanPage() {
         </Card>
     );
 }
+
+    

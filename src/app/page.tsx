@@ -41,6 +41,7 @@ export default function Home() {
   const [profilePic, setProfilePic] = useState<ImagePlaceholder | undefined>(PlaceHolderImages.find(p => p.id === 'profile-picture'));
   const [pageData, setPageData] = useState(initialStaticData.mainPage);
   const [isClient, setIsClient] = useState(false);
+  const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
 
   useEffect(() => {
     // Only run on the client
@@ -51,20 +52,23 @@ export default function Home() {
         const savedUserImages = localStorage.getItem('userImages');
         const savedSettings = localStorage.getItem('mainPageData');
 
-        const allImages = [...PlaceHolderImages];
+        const currentAllImages = [...PlaceHolderImages];
         if (savedUserImages) {
-            allImages.push(...JSON.parse(savedUserImages));
+            currentAllImages.push(...JSON.parse(savedUserImages));
         }
+        setAllImages(currentAllImages);
         
+        let currentData = initialStaticData.mainPage;
         if (savedSettings) {
             const parsed = JSON.parse(savedSettings);
              if (!parsed.secretMessage) { // Backwards compatibility
                 parsed.secretMessage = initialStaticData.mainPage.secretMessage;
             }
+            currentData = parsed;
             setPageData(parsed);
         }
 
-        const pic = allImages.find(p => p.id === 'profile-picture');
+        const pic = currentAllImages.find(p => p.id === (currentData.profileImageId || 'profile-picture'));
         setProfilePic(pic);
       } catch (e) {
           console.error("Failed to load from local storage", e);
@@ -205,3 +209,4 @@ export default function Home() {
   );
 }
 
+    

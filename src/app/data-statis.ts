@@ -48,7 +48,8 @@ export const staticData = {
         secretMessage: {
             title: "Sebuah Pesan Untukmu",
             content: "Terima kasih telah menemukan ini. Kamu adalah penjelajah sejati, sama seperti caramu menikmati setiap lapisan rasa dalam secangkir kopi. Teruslah mencari dan menemukan keajaiban di tempat-tempat tak terduga."
-        }
+        },
+        profileImageId: "profile-picture",
     },
     kisahSaya: {
         title: "Kisah Saya",
@@ -135,3 +136,5 @@ export const staticData = {
         }
     ] as FAQItem[]
 }
+
+    
