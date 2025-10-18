@@ -87,6 +87,17 @@ export default function Home() {
                 const Icon = link.icon;
                 const isExternal = link.url.startsWith('mailto:');
 
+                const buttonComponent = (
+                  <Button
+                    variant="default"
+                    className="w-full justify-start h-14 text-lg bg-primary/90 hover:bg-primary text-primary-foreground transition-all duration-300 ease-in-out transform hover:scale-[1.03] shadow-md hover:shadow-lg hover:shadow-accent/20"
+                    aria-label={isExternal ? `Visit my ${link.name}` : `Go to ${link.name}`}
+                  >
+                    <Icon className="mr-4 h-6 w-6" />
+                    <span>{link.name}</span>
+                  </Button>
+                );
+
                 if (isExternal) {
                   return (
                     <a
@@ -96,28 +107,14 @@ export default function Home() {
                       rel="noopener noreferrer"
                       className="w-full"
                     >
-                      <Button
-                        variant="default"
-                        className="w-full justify-start h-14 text-lg bg-primary/90 hover:bg-primary text-primary-foreground transition-all duration-300 ease-in-out transform hover:scale-[1.03] shadow-md hover:shadow-lg hover:shadow-accent/20"
-                        aria-label={`Visit my ${link.name}`}
-                      >
-                        <Icon className="mr-4 h-6 w-6" />
-                        <span>{link.name}</span>
-                      </Button>
+                      {buttonComponent}
                     </a>
                   );
                 }
 
                 return (
-                  <Link key={link.name} href={link.url} passHref className="w-full">
-                    <Button
-                      variant="default"
-                      className="w-full justify-start h-14 text-lg bg-primary/90 hover:bg-primary text-primary-foreground transition-all duration-300 ease-in-out transform hover:scale-[1.03] shadow-md hover:shadow-lg hover:shadow-accent/20"
-                      aria-label={`Go to ${link.name}`}
-                    >
-                      <Icon className="mr-4 h-6 w-6" />
-                      <span>{link.name}</span>
-                    </Button>
+                  <Link key={link.name} href={link.url} passHref legacyBehavior={false} className="w-full">
+                    {buttonComponent}
                   </Link>
                 );
               })}
