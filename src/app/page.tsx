@@ -13,6 +13,27 @@ import Link from "next/link";
 import { staticData as initialStaticData } from "./data-statis";
 import { cn } from "@/lib/utils";
 
+const FloatingParticles = () => {
+    const particles = Array.from({ length: 20 });
+    return (
+        <div className="floating-particles">
+            {particles.map((_, i) => (
+                <div
+                    key={i}
+                    className="particle"
+                    style={{
+                        left: `${Math.random() * 100}%`,
+                        width: `${Math.random() * 3 + 1}px`,
+                        height: `${Math.random() * 3 + 1}px`,
+                        animationDelay: `${Math.random() * 25}s`,
+                        animationDuration: `${Math.random() * 15 + 10}s`,
+                    }}
+                />
+            ))}
+        </div>
+    );
+};
+
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [profilePic, setProfilePic] = useState<ImagePlaceholder | undefined>(PlaceHolderImages.find(p => p.id === 'profile-picture'));
@@ -77,8 +98,9 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 fade-in">
-      <div className="w-full max-w-md mx-auto">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 fade-in relative">
+      <FloatingParticles />
+      <div className="w-full max-w-md mx-auto z-10">
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-2xl shadow-primary/5 rounded-2xl overflow-hidden">
           <CardHeader className="items-center text-center p-6 md:p-8">
             {profilePic && (
