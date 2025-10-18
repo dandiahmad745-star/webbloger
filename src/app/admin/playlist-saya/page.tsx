@@ -400,23 +400,25 @@ export default function AdminPlaylistSayaPage() {
                 <Accordion type="single" collapsible className="w-full">
                     {playlistsData.map(playlist => (
                         <AccordionItem value={playlist.id} key={playlist.id} className="bg-muted/50 rounded-lg px-4 mb-2 border-b-0">
-                             <AccordionTrigger className="hover:no-underline py-3">
-                                <div className="flex items-center justify-between w-full">
-                                    <p className="font-medium text-lg">{playlist.title}</p>
-                                    <div className="flex items-center gap-2 pr-4">
-                                        <Dialog onOpenChange={(open) => { if (!open) setSelectedImage(''); else setSelectedImage(playlist.imageId)}}>
-                                            <DialogTrigger asChild onClick={(e) => e.stopPropagation()}><Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button></DialogTrigger>
-                                            <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
-                                                <DialogHeader><DialogTitle>Edit {playlist.title}</DialogTitle></DialogHeader>
-                                                <div className="overflow-y-auto -mr-6 pr-6">
-                                                    <PlaylistForm playlist={playlist} onSubmit={(e) => handleSavePlaylist(e, playlist.id)} onSelectImage={setSelectedImage} closeBtnId={`close-playlist-${playlist.id}-dialog`} />
-                                                </div>
-                                            </DialogContent>
-                                        </Dialog>
-                                        <Button variant="destructive" size="icon" onClick={(e) => {e.stopPropagation(); handleDeletePlaylist(playlist.id)}}><Trash2 className="h-4 w-4" /></Button>
-                                    </div>
+                            <div className="flex items-center justify-between w-full hover:no-underline py-3">
+                                <AccordionTrigger>
+                                    <p className="font-medium text-lg pr-4">{playlist.title}</p>
+                                </AccordionTrigger>
+                                <div className="flex items-center gap-2">
+                                    <Dialog onOpenChange={(open) => { if (!open) setSelectedImage(''); else setSelectedImage(playlist.imageId)}}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="icon" onClick={(e) => e.stopPropagation()}><Edit className="h-4 w-4" /></Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+                                            <DialogHeader><DialogTitle>Edit {playlist.title}</DialogTitle></DialogHeader>
+                                            <div className="overflow-y-auto -mr-6 pr-6">
+                                                <PlaylistForm playlist={playlist} onSubmit={(e) => handleSavePlaylist(e, playlist.id)} onSelectImage={setSelectedImage} closeBtnId={`close-playlist-${playlist.id}-dialog`} />
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                    <Button variant="destructive" size="icon" onClick={(e) => {e.stopPropagation(); handleDeletePlaylist(playlist.id)}}><Trash2 className="h-4 w-4" /></Button>
                                 </div>
-                            </AccordionTrigger>
+                            </div>
                             <AccordionContent className="pt-2">
                                 <div className="border-t border-primary/10 pt-4">
                                     <div className="flex justify-between items-center mb-4">
