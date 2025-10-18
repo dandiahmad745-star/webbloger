@@ -16,7 +16,6 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Coffee, Settings, BookUser, Wrench, Home, Lock, Music } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 const menuItems = [
   { href: '/admin', label: 'Biji Kopi', icon: Coffee },
@@ -37,7 +36,7 @@ export default function AdminLayout({
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background">
-        <Sidebar collapsible="icon">
+        <Sidebar>
           <SidebarHeader>
              <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-primary font-headline group-data-[collapsible=icon]:hidden">

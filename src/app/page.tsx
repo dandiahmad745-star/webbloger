@@ -20,7 +20,9 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    // Only run on the client
     setIsClient(true);
+    
     const loadData = () => {
        try {
         const savedUserImages = localStorage.getItem('userImages');
@@ -39,6 +41,7 @@ export default function Home() {
         setProfilePic(pic);
       } catch (e) {
           console.error("Failed to load from local storage", e);
+          // Fallback to initial data if localStorage fails
           setProfilePic(PlaceHolderImages.find(p => p.id === 'profile-picture'));
       }
     }
@@ -50,9 +53,12 @@ export default function Home() {
     };
 
     window.addEventListener('storage', handleStorageChange);
+    
+    const loadingTimer = setTimeout(() => setIsLoading(false), 1000);
 
     return () => {
         window.removeEventListener('storage', handleStorageChange);
+        clearTimeout(loadingTimer);
     };
   }, []);
 
@@ -66,7 +72,7 @@ export default function Home() {
     { name: "Ngobrol", description: "Mari berbincang santai tentang kopi.", url: "/ngobrol", icon: MessageCircle },
   ];
 
-  if (!isClient) {
+  if (!isClient || isLoading) {
     return <LoadingScreen onLoaded={() => setIsLoading(false)} />;
   }
 
