@@ -1,0 +1,16 @@
+
+[
+  {
+    "id": "playlist-contoh-1",
+    "title": "Judul Playlist Contoh",
+    "description": "Deskripsi singkat tentang suasana atau tema playlist ini.",
+    "imageId": "coffee-journey",
+    "songs": [
+      {
+        "title": "Judul Lagu Contoh",
+        "artist": "Nama Artis Contoh",
+        "audioUrl": "Harus diunggah melalui form tambah lagu, tidak bisa diimpor dari sini."
+      }
+    ]
+  }
+]

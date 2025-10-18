@@ -1,0 +1,18 @@
+
+[
+  {
+    "id": "contoh-resep-1",
+    "name": "Nama Resep Contoh",
+    "description": "Deskripsi singkat dan menarik tentang resep ini.",
+    "taste": "Manis, Asam, Pahit (deskripsi rasa)",
+    "aroma": "Bunga, Buah, Cokelat (deskripsi aroma)",
+    "category": "Nama Kota, Nama Negara",
+    "beansUsed": "Jenis biji kopi yang direkomendasikan",
+    "instructions": [
+      "Langkah pertama dalam membuat resep.",
+      "Langkah kedua, jangan lupa diaduk.",
+      "Langkah ketiga, sajikan selagi hangat."
+    ],
+    "imageId": "espresso-shot"
+  }
+]
