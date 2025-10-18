@@ -4,8 +4,8 @@
 import { useState, useEffect } from 'react';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Clock, Coffee, Feather, Globe, Thermometer, Wind } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Coffee, Feather, Globe, Wind } from "lucide-react";
 import Link from "next/link";
 import { staticData as initialStaticData, type CoffeeRecipe } from "../../data-statis";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
