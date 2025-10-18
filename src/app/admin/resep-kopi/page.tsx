@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { staticData as initialStaticData, type CoffeeRecipe } from "../../data-statis";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Plus, Trash2, Upload } from "lucide-react";
+import { Edit, Plus, Trash2, Upload, Download, UploadCloud } from "lucide-react";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ export default function AdminResepKopiPage() {
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
     const [availableCities, setAvailableCities] = useState<City[]>([]);
+    const importFileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         setIsClient(true);
@@ -91,6 +92,47 @@ export default function AdminResepKopiPage() {
         setRecipesData(updatedRecipes);
         localStorage.setItem('resepKopiData', JSON.stringify(updatedRecipes));
         toast({ title: "Dihapus!", description: "Resep kopi telah dihapus." });
+    };
+
+    const handleExport = () => {
+        const dataStr = JSON.stringify(recipesData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        const exportFileDefaultName = 'resep-kopi.json';
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        toast({ title: "Ekspor Berhasil", description: "File resep-kopi.json telah diunduh." });
+    };
+
+    const handleImportClick = () => {
+        importFileInputRef.current?.click();
+    };
+
+    const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target?.result as string;
+                    const importedData = JSON.parse(text);
+                    // Simple validation
+                    if (Array.isArray(importedData) && importedData.every(item => 'id' in item && 'name' in item)) {
+                        setRecipesData(importedData);
+                        localStorage.setItem('resepKopiData', JSON.stringify(importedData));
+                        toast({ title: "Impor Berhasil", description: "Data resep telah diperbarui." });
+                    } else {
+                        throw new Error("Invalid JSON format.");
+                    }
+                } catch (error) {
+                    toast({ variant: "destructive", title: "Impor Gagal", description: "File JSON tidak valid atau formatnya salah." });
+                }
+            };
+            reader.readAsText(file);
+        }
+        // Reset file input
+        if(event.target) event.target.value = '';
     };
 
     if (!isClient) {
@@ -171,6 +213,28 @@ export default function AdminResepKopiPage() {
     }
 
     const RecipeForm = ({ recipe, onSubmit, closeBtnId }: { recipe?: CoffeeRecipe, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => {
+        
+        useEffect(() => {
+            if (recipe?.category) {
+                const parts = recipe.category.split(', ');
+                const countryName = parts.length > 1 ? parts[1] : parts[0];
+                const cityName = parts.length > 1 ? parts[0] : '';
+                
+                const countryData = allCountries.find(c => c.name === countryName);
+                if (countryData) {
+                    setSelectedCountry(countryName);
+                    setAvailableCities(countryData.cities || []);
+                    if (cityName && countryData.cities.some(c => c.name === cityName)) {
+                        setSelectedCity(cityName);
+                    } else {
+                        setSelectedCity('');
+                    }
+                }
+            } else {
+                resetCategorySelection();
+            }
+        }, [recipe]);
+
         return (
         <form onSubmit={onSubmit} className="space-y-3">
             <div className="space-y-1"><Label htmlFor="name">Nama Resep</Label><Input id="name" name="name" defaultValue={recipe?.name} required /></div>
@@ -224,33 +288,11 @@ export default function AdminResepKopiPage() {
         if (!open) {
              resetCategorySelection();
              setSelectedImage('');
+        } else if (recipe) {
+             setSelectedImage(recipe.imageId);
         } else {
-            if (recipe) {
-                setSelectedImage(recipe.imageId);
-                 if (recipe.category) {
-                    const parts = recipe.category.split(', ');
-                    const countryName = parts.length > 1 ? parts[1] : parts[0];
-                    const cityName = parts.length > 1 ? parts[0] : '';
-                    
-                    const countryData = allCountries.find(c => c.name === countryName);
-                    
-                    setSelectedCountry(countryName);
-
-                    if (countryData && countryData.cities.length > 0) {
-                        setAvailableCities(countryData.cities);
-                        setSelectedCity(cityName);
-                    } else {
-                        setAvailableCities([]);
-                        setSelectedCity('');
-                    }
-
-                } else {
-                    resetCategorySelection();
-                }
-            } else {
-                resetCategorySelection();
-                setSelectedImage('');
-            }
+             resetCategorySelection();
+             setSelectedImage('');
         }
     }
 
@@ -262,10 +304,15 @@ export default function AdminResepKopiPage() {
                     <CardTitle>Kelola Resep Kopi</CardTitle>
                     <CardDescription>Tambah, edit, atau hapus resep untuk halaman "Resep Kopi".</CardDescription>
                 </div>
-                <Dialog onOpenChange={(open) => handleDialogOpening(open)}>
-                    <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Resep</Button></DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col"><DialogHeader><DialogTitle>Tambah Resep Baru</DialogTitle></DialogHeader><div className="overflow-y-auto -mr-6 pr-6"><RecipeForm onSubmit={(e) => handleSaveRecipe(e)} closeBtnId="close-recipe-new-dialog" /></div></DialogContent>
-                </Dialog>
+                <div className="flex items-center gap-2">
+                    <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImport} />
+                    <Button variant="outline" onClick={handleImportClick}><UploadCloud className="h-4 w-4 mr-2" />Impor</Button>
+                    <Button variant="outline" onClick={handleExport}><Download className="h-4 w-4 mr-2" />Ekspor</Button>
+                    <Dialog onOpenChange={(open) => handleDialogOpening(open)}>
+                        <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Resep</Button></DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col"><DialogHeader><DialogTitle>Tambah Resep Baru</DialogTitle></DialogHeader><div className="overflow-y-auto -mr-6 pr-6"><RecipeForm onSubmit={(e) => handleSaveRecipe(e)} closeBtnId="close-recipe-new-dialog" /></div></DialogContent>
+                    </Dialog>
+                </div>
             </CardHeader>
             <CardContent className="space-y-4">
                 {recipesData.map(recipe => (
