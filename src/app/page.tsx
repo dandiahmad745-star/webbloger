@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Coffee, BookOpen, Store, Mail, MessageCircle } from "lucide-react";
+import { Coffee, BookOpen, Utensils, Mail, MessageCircle } from "lucide-react";
 
 import { LoadingScreen } from "@/components/loading-screen";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-imag
 const socialLinks = [
   { name: "Learn Coffee", url: "#", icon: Coffee },
   { name: "Kisah Saya", url: "#", icon: BookOpen },
-  { name: "Kunjungi Kafe", url: "#", icon: Store },
+  { name: "learn coffee utensils", url: "#", icon: Utensils },
   { name: "Hubungi Kami", url: "mailto:halo@kopi.com", icon: Mail },
   { name: "Ngobrol", url: "#", icon: MessageCircle },
 ];
