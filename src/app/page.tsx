@@ -44,7 +44,7 @@ export default function Home() {
               />
             )}
             <CardTitle className="font-headline text-3xl md:text-4xl text-primary">
-              Dunia Kopi
+              Arul Faathir
             </CardTitle>
             <CardDescription className="font-body text-base md:text-lg text-foreground/80 pt-2">
               Secangkir Semangat, Sejuta Cerita
