@@ -227,19 +227,22 @@ export default function AdminPeralatanPage() {
         if (Array.isArray(importedItems) && importedItems.every(item => 'name' in item && 'description' in item && 'icon' in item)) {
             const currentItems = [...utensilsData.items];
             let newItemsCount = 0;
+            let skippedCount = 0;
 
             importedItems.forEach((newItem: Utensil) => {
                 const isDuplicate = currentItems.some(existingItem => existingItem.name.toLowerCase() === newItem.name.toLowerCase());
                 if (!isDuplicate) {
                     currentItems.push(newItem);
                     newItemsCount++;
+                } else {
+                    skippedCount++;
                 }
             });
 
             saveData({ ...utensilsData, items: currentItems });
 
             if (newItemsCount > 0) {
-                toast({ title: "Impor Berhasil", description: `${newItemsCount} item peralatan baru telah ditambahkan.` });
+                toast({ title: "Impor Berhasil", description: `${newItemsCount} item peralatan baru ditambahkan. ${skippedCount} duplikat dilewati.` });
             } else {
                 toast({ title: "Tidak Ada Item Baru", description: "Semua peralatan dalam file sudah ada di koleksi Anda." });
             }
@@ -316,7 +319,7 @@ export default function AdminPeralatanPage() {
                         <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline"><UploadCloud className="h-4 w-4" /></Button>
+                                <Button variant="outline" size="icon"><UploadCloud className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem onSelect={handleImportClick}>

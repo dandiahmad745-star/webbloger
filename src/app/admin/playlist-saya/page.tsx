@@ -295,19 +295,22 @@ export default function AdminPlaylistSayaPage() {
         if (Array.isArray(importedData) && importedData.every(item => 'id' in item && 'title' in item && 'songs' in item)) {
             const currentData = [...playlistsData];
             let newItemsCount = 0;
+            let skippedCount = 0;
 
             importedData.forEach((newItem: Playlist) => {
-                const isDuplicate = currentData.some(existingItem => existingItem.id === newItem.id || existingItem.title === newItem.title);
+                const isDuplicate = currentData.some(existingItem => existingItem.id === newItem.id || existingItem.title.toLowerCase() === newItem.title.toLowerCase());
                 if (!isDuplicate) {
                     currentData.push(newItem);
                     newItemsCount++;
+                } else {
+                    skippedCount++;
                 }
             });
 
             saveData(currentData);
 
             if (newItemsCount > 0) {
-                toast({ title: "Impor Berhasil", description: `${newItemsCount} playlist baru telah ditambahkan.` });
+                toast({ title: "Impor Berhasil", description: `${newItemsCount} playlist baru ditambahkan. ${skippedCount} duplikat dilewati.` });
             } else {
                 toast({ title: "Tidak Ada Playlist Baru", description: "Semua playlist dalam file sudah ada di koleksi Anda." });
             }
@@ -366,7 +369,7 @@ export default function AdminPlaylistSayaPage() {
                     <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><UploadCloud className="h-4 w-4" /></Button>
+                            <Button variant="outline" size="icon"><UploadCloud className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem onSelect={handleImportClick}>
@@ -466,4 +469,3 @@ export default function AdminPlaylistSayaPage() {
         </Card>
     );
 }
-

@@ -235,6 +235,10 @@ export default function AdminResepKopiPage() {
         if (recipeId) {
             updatedRecipes = recipesData.map(recipe => recipe.id === recipeId ? newRecipeData : recipe);
         } else {
+             if (recipesData.some(recipe => recipe.name.toLowerCase() === newRecipeData.name.toLowerCase())) {
+                toast({ variant: "destructive", title: "Gagal", description: `Resep dengan nama "${newRecipeData.name}" sudah ada.` });
+                return;
+            }
             updatedRecipes = [...recipesData, newRecipeData];
         }
 
@@ -380,11 +384,11 @@ export default function AdminResepKopiPage() {
                     <CardTitle>Kelola Resep Kopi</CardTitle>
                     <CardDescription>Tambah, edit, atau hapus resep untuk halaman "Resep Kopi".</CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                      <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><UploadCloud className="h-4 w-4" /></Button>
+                            <Button variant="outline" size="icon"><UploadCloud className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                              <DropdownMenuItem onSelect={handleImportClick}>
