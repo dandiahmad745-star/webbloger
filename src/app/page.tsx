@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Coffee, BookOpen, Utensils, Mail, MessageCircle } from "lucide-react";
 
@@ -22,8 +22,25 @@ const socialLinks = [
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
+  const [profilePic, setProfilePic] = useState<ImagePlaceholder | undefined>(PlaceHolderImages.find(p => p.id === 'profile-picture'));
 
-  const profilePic: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === 'profile-picture');
+  useEffect(() => {
+    try {
+        const savedUserImages = localStorage.getItem('userImages');
+        const allImages = [...PlaceHolderImages];
+        if (savedUserImages) {
+            allImages.push(...JSON.parse(savedUserImages));
+        }
+        // Assuming there might be a profile pic saved in localStorage, though the admin panel doesn't support changing it yet.
+        // This is a placeholder for future functionality.
+        // For now, it just re-finds the default.
+        const pic = allImages.find(p => p.id === 'profile-picture');
+        setProfilePic(pic);
+    } catch (e) {
+        console.error("Failed to load images from local storage", e);
+        setProfilePic(PlaceHolderImages.find(p => p.id === 'profile-picture'));
+    }
+  }, []);
 
   if (isLoading) {
     return <LoadingScreen onLoaded={() => setIsLoading(false)} />;

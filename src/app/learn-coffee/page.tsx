@@ -14,11 +14,20 @@ import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-imag
 export default function LearnCoffeePage() {
     const [beans, setBeans] = useState<CoffeeBean[]>(initialCoffeeBeans);
     const [isClient, setIsClient] = useState(false);
+    const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
 
     useEffect(() => {
         setIsClient(true);
         try {
             const savedData = localStorage.getItem('coffeeBeansData');
+            const savedUserImages = localStorage.getItem('userImages');
+
+            const currentAllImages = [...PlaceHolderImages];
+            if (savedUserImages) {
+                currentAllImages.push(...JSON.parse(savedUserImages));
+            }
+            setAllImages(currentAllImages);
+
             if (savedData) {
                 setBeans(JSON.parse(savedData));
             }
@@ -27,7 +36,7 @@ export default function LearnCoffeePage() {
         }
     }, []);
 
-    const coffeeJourneyImage: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === 'coffee-journey-alt');
+    const coffeeJourneyImage: ImagePlaceholder | undefined = allImages.find(p => p.id === 'coffee-journey-alt');
 
     if (!isClient) {
         return null; // Or a loading spinner
@@ -66,7 +75,7 @@ export default function LearnCoffeePage() {
             <div className="p-8 md:p-12 -mt-16">
                 <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {beans.map((bean) => {
-                         const beanImage = PlaceHolderImages.find(p => p.id === bean.imageId);
+                         const beanImage = allImages.find(p => p.id === bean.imageId);
                         return(
                         <Card key={bean.id} className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg hover:shadow-primary/10 transition-shadow duration-300 rounded-2xl overflow-hidden flex flex-col">
                            {beanImage && (

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -93,25 +93,70 @@ export default function AdminPeralatanPage() {
 
     const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
         const [currentSelection, setCurrentSelection] = useState(currentImageId);
+        const [userImages, setUserImages] = useState<ImagePlaceholder[]>([]);
+        const fileInputRef = useRef<HTMLInputElement>(null);
+
+         useEffect(() => {
+            try {
+                const savedUserImages = localStorage.getItem('userImages');
+                if (savedUserImages) {
+                    setUserImages(JSON.parse(savedUserImages));
+                }
+            } catch (error) {
+                console.error("Failed to parse user images from localStorage", error);
+            }
+        }, []);
 
         const handleSelect = (id: string) => {
             setCurrentSelection(id);
             onSelect(id);
         }
 
+        const handleUploadClick = () => {
+            fileInputRef.current?.click();
+        };
+
+        const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            const file = event.target.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const dataUrl = e.target?.result as string;
+                    const newImageId = `user-img-${Date.now()}`;
+                    const newImage: ImagePlaceholder = {
+                        id: newImageId,
+                        imageUrl: dataUrl,
+                        description: file.name,
+                        imageHint: 'custom upload'
+                    };
+                    
+                    const updatedUserImages = [...userImages, newImage];
+                    setUserImages(updatedUserImages);
+                    localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
+                    handleSelect(newImageId);
+                    toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        const allImages = [...PlaceHolderImages, ...userImages];
+
+
         return (
             <div className="space-y-2">
                 <Label>Pilih Gambar Latar</Label>
                 <div className="grid grid-cols-4 md:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
-                    {PlaceHolderImages.map(img => (
+                    {allImages.map(img => (
                         <div key={img.id} className={cn("relative aspect-square rounded-md overflow-hidden cursor-pointer border-2", currentSelection === img.id ? 'border-primary' : 'border-transparent')} onClick={() => handleSelect(img.id)}>
                             <Image src={img.imageUrl} alt={img.description} fill className="object-cover" />
                         </div>
                     ))}
                 </div>
-                 <Button type="button" variant="outline" className="w-full" onClick={() => alert('Fungsionalitas unggah foto akan segera hadir!')}>
+                 <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+                 <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}>
                     <Upload className="h-4 w-4 mr-2" />
-                    Unggah Foto (Segera Hadir)
+                    Unggah Foto
                 </Button>
             </div>
         )

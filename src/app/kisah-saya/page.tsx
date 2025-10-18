@@ -13,11 +13,20 @@ import { staticData as initialStaticData } from "../data-statis";
 export default function KisahSayaPage() {
     const [pageData, setPageData] = useState(initialStaticData.kisahSaya);
     const [isClient, setIsClient] = useState(false);
+    const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
 
     useEffect(() => {
         setIsClient(true);
         try {
             const savedData = localStorage.getItem('kisahSayaData');
+            const savedUserImages = localStorage.getItem('userImages');
+            
+            const currentAllImages = [...PlaceHolderImages];
+            if (savedUserImages) {
+                currentAllImages.push(...JSON.parse(savedUserImages));
+            }
+            setAllImages(currentAllImages);
+            
             if (savedData) {
                 setPageData(JSON.parse(savedData));
             }
@@ -27,7 +36,7 @@ export default function KisahSayaPage() {
     }, []);
 
     const { title, description, imageId, paragraphs } = pageData;
-    const myStoryImage: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === imageId);
+    const myStoryImage: ImagePlaceholder | undefined = allImages.find(p => p.id === imageId);
     
     if (!isClient) {
         return null; // Or a loading spinner

@@ -19,11 +19,20 @@ const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
 export default function UtensilsPage() {
     const [pageData, setPageData] = useState(initialStaticData.utensils);
     const [isClient, setIsClient] = useState(false);
+    const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
 
     useEffect(() => {
         setIsClient(true);
         try {
             const savedData = localStorage.getItem('utensilsData');
+            const savedUserImages = localStorage.getItem('userImages');
+            
+            const currentAllImages = [...PlaceHolderImages];
+            if (savedUserImages) {
+                currentAllImages.push(...JSON.parse(savedUserImages));
+            }
+            setAllImages(currentAllImages);
+
             if (savedData) {
                 setPageData(JSON.parse(savedData));
             }
@@ -33,7 +42,7 @@ export default function UtensilsPage() {
     }, []);
 
     const { title, description, imageId, items } = pageData;
-    const utensilsImage: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === imageId);
+    const utensilsImage: ImagePlaceholder | undefined = allImages.find(p => p.id === imageId);
 
     if (!isClient) {
         return null; // Or a loading spinner
@@ -91,4 +100,3 @@ export default function UtensilsPage() {
         </main>
     );
 }
-
