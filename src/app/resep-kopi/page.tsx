@@ -9,6 +9,7 @@ import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-imag
 import { Badge } from '@/components/ui/badge';
 import { RecipeFilter } from './recipe-filter';
 import { fetchServerData } from "@/lib/api";
+import React from 'react';
 
 export default async function ResepKopiPage() {
     const allRecipes = await fetchServerData('resepKopiData', staticData.resepKopi);
@@ -51,8 +52,9 @@ export default async function ResepKopiPage() {
                     </div>
                 </div>
             </div>
-
-            <RecipeFilter.Content allRecipes={allRecipes} allImages={allImages} authorName={mainPageData.name} />
+            <React.Suspense fallback={<div className="p-8 md:p-12 -mt-16"><div className="max-w-4xl mx-auto"><p>Loading recipes...</p></div></div>}>
+                <RecipeFilter.Content allRecipes={allRecipes} allImages={allImages} authorName={mainPageData.name} />
+            </React.Suspense>
         </main>
     );
 }
