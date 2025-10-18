@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "profile-picture",
+      "description": "A professional and friendly portrait for a bio link page.",
+      "imageUrl": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwb3J0cmFpdCUyMHByb2Zlc3Npb25hbHxlbnwwfHx8fDE3NjA3NTIwNTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "portrait professional"
+    }
+  ]
 }
