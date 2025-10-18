@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 
 const socialLinks = [
-  { name: "Biji Kopi Kami", url: "#", icon: Coffee },
+  { name: "Learn Coffee", url: "#", icon: Coffee },
   { name: "Kisah Kami", url: "#", icon: BookOpen },
   { name: "Kunjungi Kafe", url: "#", icon: Store },
   { name: "Hubungi Kami", url: "mailto:halo@kopi.com", icon: Mail },
