@@ -153,6 +153,9 @@ export default function AdminPengaturanPage() {
                 if (!parsed.secretMessage) {
                     parsed.secretMessage = initialStaticData.mainPage.secretMessage;
                 }
+                if (!parsed.chatWelcome) {
+                    parsed.chatWelcome = initialStaticData.mainPage.chatWelcome;
+                }
                 setSettingsData(parsed);
                 setSelectedImage(parsed.profileImageId || 'profile-picture');
             }
@@ -275,5 +278,3 @@ export default function AdminPengaturanPage() {
         </Card>
     );
 }
-
-    
