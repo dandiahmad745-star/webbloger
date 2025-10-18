@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit/zod';
+import { z } from 'zod';
 
 // Define the output schema based on the CoffeeRecipe type in data-statis.ts
 export const CoffeeRecipeSchema = z.object({
