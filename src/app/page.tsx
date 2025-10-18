@@ -43,16 +43,16 @@ export default function Home() {
   }, []);
 
   const socialLinks = [
-    { name: "Learn Coffee", url: "/learn-coffee", icon: Coffee },
-    { name: "Kisah Saya", url: "/kisah-saya", icon: BookOpen },
-    { name: "learn coffee utensils", url: "/learn-coffee-utensils", icon: Utensils },
-    { name: "Pesan Rahasia", url: "/pesan-rahasia", icon: Lock },
-    { name: "Playlist Saya", url: "/playlist-saya", icon: Music },
-    { name: "Hubungi Saya", url: `mailto:${pageData.contactEmail}`, icon: Mail },
-    { name: "Ngobrol", url: "/ngobrol", icon: MessageCircle },
+    { name: "Learn Coffee", description: "Jelajahi berbagai jenis biji kopi.", url: "/learn-coffee", icon: Coffee },
+    { name: "Kisah Saya", description: "Perjalanan saya dalam dunia kopi.", url: "/kisah-saya", icon: BookOpen },
+    { name: "Peralatan Kopi", description: "Alat-alat untuk secangkir kopi sempurna.", url: "/learn-coffee-utensils", icon: Utensils },
+    { name: "Pesan Rahasia", description: "Sebuah catatan khusus untuk Anda.", url: "/pesan-rahasia", icon: Lock },
+    { name: "Playlist Saya", description: "Lagu-lagu yang menemani secangkir kopi.", url: "/playlist-saya", icon: Music },
+    { name: "Hubungi Saya", description: "Kirimkan saya email untuk kolaborasi.", url: `mailto:${pageData.contactEmail}`, icon: Mail },
+    { name: "Ngobrol", description: "Mari berbincang santai tentang kopi.", url: "/ngobrol", icon: MessageCircle },
   ];
 
-  if (!isClient || isLoading) {
+  if (!isClient) {
     return <LoadingScreen onLoaded={() => setIsLoading(false)} />;
   }
 
@@ -84,19 +84,24 @@ export default function Home() {
               {pageData.bio}
             </p>
             <Separator className="my-6 bg-primary/10" />
-            <div className="flex flex-col space-y-4">
+            <div className="flex flex-col space-y-3">
               {socialLinks.map((link) => {
                 const Icon = link.icon;
                 const isExternal = link.url.startsWith('mailto:');
+                // Corrected the name for 'learn coffee utensils'
+                const displayName = link.name === 'learn coffee utensils' ? 'Peralatan Kopi' : link.name;
 
                 const buttonComponent = (
                   <Button
                     variant="default"
-                    className="w-full justify-start h-14 text-lg bg-primary/90 hover:bg-primary text-primary-foreground transition-all duration-300 ease-in-out transform hover:scale-[1.03] shadow-md hover:shadow-lg hover:shadow-accent/20"
-                    aria-label={isExternal ? `Visit my ${link.name}` : `Go to ${link.name}`}
+                    className="w-full justify-start h-auto p-4 text-left bg-primary/90 hover:bg-primary text-primary-foreground transition-all duration-300 ease-in-out transform hover:scale-[1.02] shadow-md hover:shadow-lg hover:shadow-accent/20"
+                    aria-label={isExternal ? `Visit my ${displayName}` : `Go to ${displayName}`}
                   >
-                    <Icon className="mr-4 h-6 w-6" />
-                    <span>{link.name}</span>
+                    <Icon className="mr-4 h-7 w-7 text-accent" />
+                    <div className="flex flex-col">
+                        <span className="font-bold text-base">{displayName}</span>
+                        <span className="text-sm font-normal text-primary-foreground/80">{link.description}</span>
+                    </div>
                   </Button>
                 );
 
