@@ -1,16 +1,37 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Globe, Leaf, Star } from "lucide-react";
+import { ArrowLeft, Globe, Star } from "lucide-react";
 import Link from "next/link";
-import { coffeeBeans } from "./coffee-data";
+import { coffeeBeans as initialCoffeeBeans, type CoffeeBean } from "./coffee-data";
 import { Badge } from "@/components/ui/badge";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 
-
 export default function LearnCoffeePage() {
+    const [beans, setBeans] = useState<CoffeeBean[]>(initialCoffeeBeans);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+        try {
+            const savedData = localStorage.getItem('coffeeBeansData');
+            if (savedData) {
+                setBeans(JSON.parse(savedData));
+            }
+        } catch (error) {
+            console.error("Failed to parse from localStorage", error);
+        }
+    }, []);
+
     const coffeeJourneyImage: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === 'coffee-journey-alt');
+
+    if (!isClient) {
+        return null; // Or a loading spinner
+    }
 
     return (
         <main className="min-h-screen w-full bg-background text-foreground fade-in">
@@ -44,7 +65,7 @@ export default function LearnCoffeePage() {
 
             <div className="p-8 md:p-12 -mt-16">
                 <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {coffeeBeans.map((bean) => {
+                    {beans.map((bean) => {
                          const beanImage = PlaceHolderImages.find(p => p.id === bean.imageId);
                         return(
                         <Card key={bean.id} className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg hover:shadow-primary/10 transition-shadow duration-300 rounded-2xl overflow-hidden flex flex-col">

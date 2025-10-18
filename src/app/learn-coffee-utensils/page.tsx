@@ -1,11 +1,14 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Coffee, Wind, Droplets } from "lucide-react";
 import Link from "next/link";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import { staticData } from "../data-statis";
+import { staticData as initialStaticData } from "../data-statis";
 
 const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
     Wind,
@@ -13,10 +16,28 @@ const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
     Droplets,
 };
 
-
 export default function UtensilsPage() {
-    const { title, description, imageId, items } = staticData.utensils;
+    const [pageData, setPageData] = useState(initialStaticData.utensils);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+        try {
+            const savedData = localStorage.getItem('utensilsData');
+            if (savedData) {
+                setPageData(JSON.parse(savedData));
+            }
+        } catch (error) {
+            console.error("Failed to parse from localStorage", error);
+        }
+    }, []);
+
+    const { title, description, imageId, items } = pageData;
     const utensilsImage: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === imageId);
+
+    if (!isClient) {
+        return null; // Or a loading spinner
+    }
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 fade-in bg-background">
@@ -46,7 +67,7 @@ export default function UtensilsPage() {
                             return (
                                 <div key={item.name} className="flex flex-col items-center text-center">
                                     <div className="p-4 bg-accent/20 rounded-full mb-4">
-                                        <Icon className="w-10 h-10 text-accent" />
+                                       {Icon ? <Icon className="w-10 h-10 text-accent" /> : <Coffee className="w-10 h-10 text-accent" />}
                                     </div>
                                     <h3 className="font-headline text-2xl text-primary mb-2">{item.name}</h3>
                                     <p className="font-body text-foreground/80">{item.description}</p>
@@ -70,3 +91,4 @@ export default function UtensilsPage() {
         </main>
     );
 }
+
