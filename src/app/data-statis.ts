@@ -5,6 +5,18 @@ export type Utensil = {
     icon: string;
 };
 
+export type CoffeeRecipe = {
+    id: string;
+    name: string;
+    description: string;
+    taste: string;
+    aroma: string;
+    origin: string;
+    beansUsed: string;
+    instructions: string[];
+    imageId: string;
+}
+
 export const staticData = {
     mainPage: {
         name: "Arul Faathir",
@@ -47,5 +59,24 @@ export const staticData = {
         description: "Beberapa lagu yang menemani secangkir kopi.",
         imageId: "coffee-journey",
         songs: [] as { title: string; artist: string; audioUrl: string }[],
-    }
+    },
+    resepKopi: [
+        {
+            id: 'espresso-sempurna',
+            name: 'Espresso Sempurna',
+            description: 'Dasar dari semua minuman kopi, espresso yang kaya dan pekat.',
+            taste: 'Pahit, manis, dengan sedikit asam',
+            aroma: 'Karamel, cokelat, dan bunga',
+            origin: 'Italia',
+            beansUsed: 'Biji Arabica Gayo',
+            instructions: [
+                'Giling 18-20 gram biji kopi dengan kehalusan seperti gula pasir.',
+                'Ratakan dan padatkan bubuk kopi (tamping) di dalam portafilter.',
+                'Pasang portafilter ke mesin espresso.',
+                'Ekstrak selama 25-30 detik untuk menghasilkan sekitar 30-40 ml espresso.',
+                'Sajikan segera dan nikmati crema emasnya.'
+            ],
+            imageId: 'espresso-shot'
+        }
+    ] as CoffeeRecipe[]
 }

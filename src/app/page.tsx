@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Coffee, BookOpen, Utensils, Mail, MessageCircle, Lock, Music, Sparkles } from "lucide-react";
+import { Coffee, BookOpen, Utensils, Mail, MessageCircle, Lock, Music, Sparkles, ClipboardList } from "lucide-react";
 
 import { LoadingScreen } from "@/components/loading-screen";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,6 +92,7 @@ export default function Home() {
 
   const socialLinks = [
     { name: "Learn Coffee", description: "Jelajahi berbagai jenis biji kopi.", url: "/learn-coffee", icon: Coffee },
+    { name: "Resep Kopi", description: "Ciptakan kopi spesial Anda sendiri.", url: "/resep-kopi", icon: ClipboardList },
     { name: "Kisah Saya", description: "Perjalanan saya dalam dunia kopi.", url: "/kisah-saya", icon: BookOpen },
     { name: "Peralatan Kopi", description: "Alat-alat untuk secangkir kopi sempurna.", url: "/learn-coffee-utensils", icon: Utensils },
     { name: "Pesan Rahasia", description: "Sebuah catatan khusus untuk Anda.", url: "/pesan-rahasia", icon: Lock },

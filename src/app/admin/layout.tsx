@@ -15,10 +15,11 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Coffee, Settings, BookUser, Wrench, Home, Lock, Music } from 'lucide-react';
+import { Coffee, Settings, BookUser, Wrench, Home, Lock, Music, ClipboardList } from 'lucide-react';
 
 const menuItems = [
   { href: '/admin', label: 'Biji Kopi', icon: Coffee },
+  { href: '/admin/resep-kopi', label: 'Resep Kopi', icon: ClipboardList },
   { href: '/admin/kisah-saya', label: 'Kisah Saya', icon: BookUser },
   { href: '/admin/peralatan', label: 'Peralatan', icon: Wrench },
   { href: '/admin/pesan-rahasia', label: 'Pesan Rahasia', icon: Lock },

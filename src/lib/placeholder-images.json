@@ -65,6 +65,12 @@
       "description": "Cangkir keramik tradisional berisi kopi Jawa.",
       "imageUrl": "https://images.unsplash.com/photo-1559496417-e7f25cb247f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxqYXZhbmVzZSUyMGNvZmZlZXxlbnwwfHx8fDE3NjEyMDExNDF8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "javanese coffee"
+    },
+    {
+      "id": "espresso-shot",
+      "description": "Tembakan espresso yang baru ditarik dengan crema tebal.",
+      "imageUrl": "https://images.unsplash.com/photo-1504620899424-9b5523d46344?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxlc3ByZXNzbyUyMHNob3R8ZW58MHx8fHwxNzYxMzk1MjEwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "espresso shot"
     }
   ]
 }
