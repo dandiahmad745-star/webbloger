@@ -17,8 +17,10 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [profilePic, setProfilePic] = useState<ImagePlaceholder | undefined>(PlaceHolderImages.find(p => p.id === 'profile-picture'));
   const [pageData, setPageData] = useState(initialStaticData.mainPage);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     try {
         const savedUserImages = localStorage.getItem('userImages');
         const savedSettings = localStorage.getItem('mainPageData');
@@ -50,7 +52,7 @@ export default function Home() {
     { name: "Ngobrol", url: "/ngobrol", icon: MessageCircle },
   ];
 
-  if (isLoading) {
+  if (!isClient || isLoading) {
     return <LoadingScreen onLoaded={() => setIsLoading(false)} />;
   }
 
