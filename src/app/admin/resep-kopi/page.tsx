@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { staticData as initialStaticData, type CoffeeRecipe } from "../../data-statis";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Plus, Trash2, Upload, Download, UploadCloud } from "lucide-react";
+import { Edit, Plus, Trash2, Upload, Download, UploadCloud, FileJson } from "lucide-react";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -165,6 +165,9 @@ export default function AdminResepKopiPage() {
     const [selectedCity, setSelectedCity] = useState('');
     const [availableCities, setAvailableCities] = useState<City[]>([]);
     const importFileInputRef = useRef<HTMLInputElement>(null);
+    const [jsonInput, setJsonInput] = useState('');
+    const [isPasteImportOpen, setIsPasteImportOpen] = useState(false);
+
 
     useEffect(() => {
         setIsClient(true);
@@ -247,7 +250,34 @@ export default function AdminResepKopiPage() {
         importFileInputRef.current?.click();
     };
 
-    const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const processImportedRecipes = (importedRecipes: any[]) => {
+        if (Array.isArray(importedRecipes) && importedRecipes.every(item => 'id' in item && 'name' in item)) {
+            const currentRecipes = [...recipesData];
+            let newRecipesCount = 0;
+
+            importedRecipes.forEach((newRecipe: CoffeeRecipe) => {
+                const isDuplicate = currentRecipes.some(existingRecipe => existingRecipe.id === newRecipe.id || existingRecipe.name === newRecipe.name);
+                if (!isDuplicate) {
+                    currentRecipes.push(newRecipe);
+                    newRecipesCount++;
+                }
+            });
+
+            setRecipesData(currentRecipes);
+            localStorage.setItem('resepKopiData', JSON.stringify(currentRecipes));
+
+            if (newRecipesCount > 0) {
+                toast({ title: "Impor Berhasil", description: `${newRecipesCount} resep baru telah ditambahkan.` });
+            } else {
+                toast({ title: "Tidak Ada Resep Baru", description: "Semua resep dalam file sudah ada di koleksi Anda." });
+            }
+             return true;
+        } else {
+            throw new Error("Invalid JSON format.");
+        }
+    };
+
+    const handleImportFromFile = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
@@ -255,32 +285,7 @@ export default function AdminResepKopiPage() {
                 try {
                     const text = e.target?.result as string;
                     const importedRecipes = JSON.parse(text);
-
-                    if (Array.isArray(importedRecipes) && importedRecipes.every(item => 'id' in item && 'name' in item)) {
-                        
-                        const updatedRecipes = [...recipesData];
-                        let newRecipesCount = 0;
-                        
-                        importedRecipes.forEach((newRecipe: CoffeeRecipe) => {
-                            const isDuplicate = updatedRecipes.some(existingRecipe => existingRecipe.id === newRecipe.id || existingRecipe.name === newRecipe.name);
-                            if (!isDuplicate) {
-                                updatedRecipes.push(newRecipe);
-                                newRecipesCount++;
-                            }
-                        });
-
-                        setRecipesData(updatedRecipes);
-                        localStorage.setItem('resepKopiData', JSON.stringify(updatedRecipes));
-
-                        if (newRecipesCount > 0) {
-                            toast({ title: "Impor Berhasil", description: `${newRecipesCount} resep baru telah ditambahkan.` });
-                        } else {
-                            toast({ title: "Tidak Ada Resep Baru", description: "Semua resep dalam file sudah ada di koleksi Anda." });
-                        }
-
-                    } else {
-                        throw new Error("Invalid JSON format.");
-                    }
+                    processImportedRecipes(importedRecipes);
                 } catch (error) {
                     toast({ variant: "destructive", title: "Impor Gagal", description: "File JSON tidak valid atau formatnya salah." });
                 }
@@ -289,6 +294,22 @@ export default function AdminResepKopiPage() {
         }
         if (event.target) {
             event.target.value = '';
+        }
+    };
+
+    const handleImportFromJsonText = () => {
+        if (!jsonInput.trim()) {
+            toast({ variant: "destructive", title: "Input Kosong", description: "Silakan tempel konten JSON." });
+            return;
+        }
+        try {
+            const importedRecipes = JSON.parse(jsonInput);
+            if (processImportedRecipes(importedRecipes)) {
+                setJsonInput('');
+                setIsPasteImportOpen(false);
+            }
+        } catch (error) {
+            toast({ variant: "destructive", title: "Impor Gagal", description: "Teks JSON tidak valid atau formatnya salah." });
         }
     };
 
@@ -335,8 +356,31 @@ export default function AdminResepKopiPage() {
                     <CardDescription>Tambah, edit, atau hapus resep untuk halaman "Resep Kopi".</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                    <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImport} />
-                    <Button variant="outline" onClick={handleImportClick}><UploadCloud className="h-4 w-4 mr-2" />Impor</Button>
+                    <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
+                    <Dialog open={isPasteImportOpen} onOpenChange={setIsPasteImportOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline"><FileJson className="h-4 w-4 mr-2" />Impor dari Teks</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Impor Resep dari Teks</DialogTitle>
+                            </DialogHeader>
+                            <div className="py-4">
+                                <Label htmlFor="json-paste-area">Tempel konten JSON di sini:</Label>
+                                <Textarea 
+                                    id="json-paste-area"
+                                    className="mt-2 font-mono h-64"
+                                    placeholder="[&#10;  {&#10;    &quot;id&quot;: &quot;...&quot;,&#10;    &quot;name&quot;: &quot;...&quot;&#10;    ...&#10;  }&#10;]"
+                                    value={jsonInput}
+                                    onChange={(e) => setJsonInput(e.target.value)}
+                                />
+                            </div>
+                            <DialogFooter>
+                                <Button onClick={handleImportFromJsonText}>Impor Sekarang</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    <Button variant="outline" onClick={handleImportClick}><UploadCloud className="h-4 w-4 mr-2" />Impor File</Button>
                     <Button variant="outline" onClick={handleExport}><Download className="h-4 w-4 mr-2" />Ekspor</Button>
                     <Dialog onOpenChange={(open) => handleDialogOpening(open)}>
                         <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Resep</Button></DialogTrigger>
@@ -387,5 +431,7 @@ export default function AdminResepKopiPage() {
         </Card>
     );
 }
+
+    
 
     

@@ -95,7 +95,7 @@ export default function Home() {
     { name: "Resep Kopi", description: "Ciptakan kopi spesial Anda sendiri.", url: "/resep-kopi", icon: ClipboardList },
     { name: "Kisah Saya", description: "Perjalanan saya dalam dunia kopi.", url: "/kisah-saya", icon: BookOpen },
     { name: "Peralatan Kopi", description: "Alat-alat untuk secangkir kopi sempurna.", url: "/learn-coffee-utensils", icon: Utensils },
-    { name: "Pesan Rahasia", description: "Sebuah catatan khusus untuk Anda.", url: "/pesan-rahasia", icon: Lock },
+    { name: "Pesan Hari Ini", description: "Sebuah catatan khusus untuk Anda.", url: "/pesan-rahasia", icon: Lock },
     { name: "Playlist Saya", description: "Lagu-lagu yang menemani secangkir kopi.", url: "/playlist-saya", icon: Music },
     { name: "Hubungi Saya", description: "Kirimkan saya email untuk kolaborasi.", url: `mailto:${pageData.contactEmail}`, icon: Mail },
     { name: "Asisten Kopi", description: "Buat resep baru dengan bantuan AI.", url: "/ngobrol", icon: Sparkles },
@@ -203,3 +203,5 @@ export default function Home() {
     </>
   );
 }
+
+    

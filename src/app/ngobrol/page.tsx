@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Send, Sparkles, Clipboard, Check, UploadCloud } from 'lucide-react';
+import { ArrowLeft, Send, Sparkles, Clipboard, Check, FileJson } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { staticData as initialStaticData } from '../data-statis';
@@ -11,6 +12,9 @@ import { generateRecipe } from '@/ai/flows/generate-recipe-flow';
 import { useToast } from '@/hooks/use-toast';
 import { type CoffeeRecipe } from '../data-statis';
 import { type GenerateRecipeOutput } from '@/ai/flows/recipe-schema';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 type Message = {
     from: 'user' | 'bot';
@@ -51,7 +55,7 @@ export default function NgobrolPage() {
         const recipeString = JSON.stringify([recipe], null, 2);
         navigator.clipboard.writeText(recipeString).then(() => {
             setCopiedStates(prev => ({ ...prev, [recipe.id]: true }));
-            toast({ title: "Disalin!", description: "Resep telah disalin ke clipboard." });
+            toast({ title: "Disalin!", description: "Resep dalam format JSON telah disalin." });
             setTimeout(() => {
                 setCopiedStates(prev => ({ ...prev, [recipe.id]: false }));
             }, 2000);
@@ -139,7 +143,7 @@ export default function NgobrolPage() {
                     {isCopied ? 'Disalin' : 'Salin JSON'}
                 </Button>
                 <Button size="sm" onClick={() => handleImportRecipe(recipe)}>
-                   <UploadCloud className="w-4 h-4 mr-2"/>
+                   <FileJson className="w-4 h-4 mr-2"/>
                     Impor Resep Ini
                 </Button>
             </div>
@@ -209,3 +213,5 @@ export default function NgobrolPage() {
         </main>
     );
 }
+
+    
