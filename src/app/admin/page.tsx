@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { staticData as initialStaticData } from "../data-statis";
 import { coffeeBeans as initialCoffeeBeans, type CoffeeBean } from "../learn-coffee/coffee-data";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminPage() {
     const { toast } = useToast();
@@ -91,7 +92,8 @@ export default function AdminPage() {
         setCoffeeBeansData(updatedBeans);
         localStorage.setItem('coffeeBeansData', JSON.stringify(updatedBeans));
         toast({ title: "Sukses!", description: `Biji kopi ${newBeanData.name} telah disimpan.` });
-        document.getElementById(`close-bean-${beanId || 'new'}-dialog`)?.click();
+        const closeBtn = document.getElementById(`close-bean-${beanId || 'new'}-dialog`);
+        if(closeBtn) closeBtn.click();
     };
 
     const handleDeleteCoffeeBean = (beanId: string) => {
@@ -120,132 +122,116 @@ export default function AdminPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Kelola Biji Kopi */}
-                    <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg md:col-span-2">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Kelola Biji Kopi</CardTitle>
-                                <CardDescription>Untuk halaman "Learn Coffee".</CardDescription>
-                            </div>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button>
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Tambah Baru
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader><DialogTitle>Tambah Biji Kopi Baru</DialogTitle></DialogHeader>
-                                    <form onSubmit={(e) => handleSaveCoffeeBean(e)} className="space-y-4">
-                                        <div className="space-y-2"><Label htmlFor="name">Nama</Label><Input id="name" name="name" required /></div>
-                                        <div className="space-y-2"><Label htmlFor="origin">Asal</Label><Input id="origin" name="origin" required /></div>
-                                        <div className="space-y-2"><Label htmlFor="type">Tipe</Label><Input id="type" name="type" placeholder="Arabica / Robusta / Liberica" required /></div>
-                                        <div className="space-y-2"><Label htmlFor="description">Deskripsi</Label><Textarea id="description" name="description" required /></div>
-                                        <div className="space-y-2"><Label htmlFor="rating">Rating (1-5)</Label><Input id="rating" name="rating" type="number" min="1" max="5" required /></div>
-                                        <div className="space-y-2"><Label htmlFor="imageId">Image ID</Label><Input id="imageId" name="imageId" placeholder="e.g., gayo-beans" required /></div>
-                                        <DialogFooter>
-                                            <Button type="submit">Simpan</Button>
-                                            <Button type="button" variant="ghost" id="close-bean-new-dialog">Batal</Button>
-                                        </DialogFooter>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {coffeeBeansData.map(bean => (
-                                <div key={bean.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                                    <p className="font-medium">{bean.name}</p>
-                                    <div className="flex items-center gap-2">
-                                        <Dialog>
-                                            <DialogTrigger asChild><Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button></DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader><DialogTitle>Edit {bean.name}</DialogTitle></DialogHeader>
-                                                <form onSubmit={(e) => handleSaveCoffeeBean(e, bean.id)} className="space-y-4">
-                                                    <div className="space-y-2"><Label htmlFor={`name-${bean.id}`}>Nama</Label><Input id={`name-${bean.id}`} name="name" defaultValue={bean.name} required /></div>
-                                                    <div className="space-y-2"><Label htmlFor={`origin-${bean.id}`}>Asal</Label><Input id={`origin-${bean.id}`} name="origin" defaultValue={bean.origin} required /></div>
-                                                    <div className="space-y-2"><Label htmlFor={`type-${bean.id}`}>Tipe</Label><Input id={`type-${bean.id}`} name="type" defaultValue={bean.type} required /></div>
-                                                    <div className="space-y-2"><Label htmlFor={`description-${bean.id}`}>Deskripsi</Label><Textarea id={`description-${bean.id}`} name="description" defaultValue={bean.description} required /></div>
-                                                    <div className="space-y-2"><Label htmlFor={`rating-${bean.id}`}>Rating (1-5)</Label><Input id={`rating-${bean.id}`} name="rating" type="number" min="1" max="5" defaultValue={bean.rating} required /></div>
-                                                    <div className="space-y-2"><Label htmlFor={`imageId-${bean.id}`}>Image ID</Label><Input id={`imageId-${bean.id}`} name="imageId" defaultValue={bean.imageId} required /></div>
-                                                    <DialogFooter>
-                                                        <Button type="submit">Simpan Perubahan</Button>
-                                                         <Button type="button" variant="ghost" id={`close-bean-${bean.id}-dialog`}>Batal</Button>
-                                                    </DialogFooter>
-                                                </form>
-                                            </DialogContent>
-                                        </Dialog>
-                                        <Button variant="destructive" size="icon" onClick={() => handleDeleteCoffeeBean(bean.id)}><Trash2 className="h-4 w-4" /></Button>
-                                    </div>
+                <Tabs defaultValue="coffee-beans" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 mb-4">
+                        <TabsTrigger value="coffee-beans">Biji Kopi</TabsTrigger>
+                        <TabsTrigger value="kisah-saya">Kisah Saya</TabsTrigger>
+                        <TabsTrigger value="peralatan">Peralatan</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="coffee-beans">
+                        <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div>
+                                    <CardTitle>Kelola Biji Kopi</CardTitle>
+                                    <CardDescription>Untuk halaman "Learn Coffee".</CardDescription>
                                 </div>
-                            ))}
-                        </CardContent>
-                    </Card>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button>
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Tambah Baru
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader><DialogTitle>Tambah Biji Kopi Baru</DialogTitle></DialogHeader>
+                                        <form onSubmit={(e) => handleSaveCoffeeBean(e)} className="space-y-4">
+                                            <div className="space-y-2"><Label htmlFor="name">Nama</Label><Input id="name" name="name" required /></div>
+                                            <div className="space-y-2"><Label htmlFor="origin">Asal</Label><Input id="origin" name="origin" required /></div>
+                                            <div className="space-y-2"><Label htmlFor="type">Tipe</Label><Input id="type" name="type" placeholder="Arabica / Robusta / Liberica" required /></div>
+                                            <div className="space-y-2"><Label htmlFor="description">Deskripsi</Label><Textarea id="description" name="description" required /></div>
+                                            <div className="space-y-2"><Label htmlFor="rating">Rating (1-5)</Label><Input id="rating" name="rating" type="number" min="1" max="5" required /></div>
+                                            <div className="space-y-2"><Label htmlFor="imageId">Image ID</Label><Input id="imageId" name="imageId" placeholder="e.g., gayo-beans" required /></div>
+                                            <DialogFooter>
+                                                <Button type="submit">Simpan</Button>
+                                                <DialogTrigger asChild>
+                                                    <Button type="button" variant="ghost" id="close-bean-new-dialog">Batal</Button>
+                                                </DialogTrigger>
+                                            </DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {coffeeBeansData.map(bean => (
+                                    <div key={bean.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                        <p className="font-medium">{bean.name}</p>
+                                        <div className="flex items-center gap-2">
+                                            <Dialog>
+                                                <DialogTrigger asChild><Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button></DialogTrigger>
+                                                <DialogContent>
+                                                    <DialogHeader><DialogTitle>Edit {bean.name}</DialogTitle></DialogHeader>
+                                                    <form onSubmit={(e) => handleSaveCoffeeBean(e, bean.id)} className="space-y-4">
+                                                        <div className="space-y-2"><Label htmlFor={`name-${bean.id}`}>Nama</Label><Input id={`name-${bean.id}`} name="name" defaultValue={bean.name} required /></div>
+                                                        <div className="space-y-2"><Label htmlFor={`origin-${bean.id}`}>Asal</Label><Input id={`origin-${bean.id}`} name="origin" defaultValue={bean.origin} required /></div>
+                                                        <div className="space-y-2"><Label htmlFor={`type-${bean.id}`}>Tipe</Label><Input id={`type-${bean.id}`} name="type" defaultValue={bean.type} required /></div>
+                                                        <div className="space-y-2"><Label htmlFor={`description-${bean.id}`}>Deskripsi</Label><Textarea id={`description-${bean.id}`} name="description" defaultValue={bean.description} required /></div>
+                                                        <div className="space-y-2"><Label htmlFor={`rating-${bean.id}`}>Rating (1-5)</Label><Input id={`rating-${bean.id}`} name="rating" type="number" min="1" max="5" defaultValue={bean.rating} required /></div>
+                                                        <div className="space-y-2"><Label htmlFor={`imageId-${bean.id}`}>Image ID</Label><Input id={`imageId-${bean.id}`} name="imageId" defaultValue={bean.imageId} required /></div>
+                                                        <DialogFooter>
+                                                            <Button type="submit">Simpan Perubahan</Button>
+                                                            <DialogTrigger asChild>
+                                                                <Button type="button" variant="ghost" id={`close-bean-${bean.id}-dialog`}>Batal</Button>
+                                                            </DialogTrigger>
+                                                        </DialogFooter>
+                                                    </form>
+                                                </DialogContent>
+                                            </Dialog>
+                                            <Button variant="destructive" size="icon" onClick={() => handleDeleteCoffeeBean(bean.id)}><Trash2 className="h-4 w-4" /></Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
-                    {/* Kelola Kisah Saya */}
-                    <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
+                    <TabsContent value="kisah-saya">
+                        <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
+                            <CardHeader>
                                 <CardTitle>Kelola "Kisah Saya"</CardTitle>
                                 <CardDescription>Untuk halaman "Kisah Saya".</CardDescription>
-                            </div>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader><DialogTitle>Edit Konten "Kisah Saya"</DialogTitle></DialogHeader>
-                                    <form onSubmit={handleSaveKisahSaya} className="space-y-4">
-                                        <div className="space-y-2"><Label htmlFor="title">Judul</Label><Input id="title" name="title" defaultValue={kisahSayaData.title} /></div>
-                                        <div className="space-y-2"><Label htmlFor="description">Deskripsi</Label><Input id="description" name="description" defaultValue={kisahSayaData.description} /></div>
-                                        <div className="space-y-2"><Label htmlFor="paragraphs">Paragraf (pisahkan dengan baris baru)</Label><Textarea id="paragraphs" name="paragraphs" defaultValue={kisahSayaData.paragraphs.join('\n')} rows={5} /></div>
-                                        <DialogFooter>
-                                            <Button type="submit">Simpan Perubahan</Button>
-                                            <Button type="button" variant="ghost" id="close-kisah-dialog">Batal</Button>
-                                        </DialogFooter>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-center py-8 text-muted-foreground">
-                                <p className="font-body text-sm">Klik tombol edit untuk mengubah judul, deskripsi, dan paragraf.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleSaveKisahSaya} className="space-y-4">
+                                    <div className="space-y-2"><Label htmlFor="title">Judul</Label><Input id="title" name="title" defaultValue={kisahSayaData.title} /></div>
+                                    <div className="space-y-2"><Label htmlFor="description">Deskripsi</Label><Input id="description" name="description" defaultValue={kisahSayaData.description} /></div>
+                                    <div className="space-y-2"><Label htmlFor="paragraphs">Paragraf (pisahkan dengan baris baru)</Label><Textarea id="paragraphs" name="paragraphs" defaultValue={kisahSayaData.paragraphs.join('\n')} rows={5} /></div>
+                                    <DialogFooter>
+                                        <Button type="submit">Simpan Perubahan</Button>
+                                    </DialogFooter>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
-                    {/* Kelola Peralatan */}
-                    <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
+                    <TabsContent value="peralatan">
+                        <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
+                            <CardHeader>
                                 <CardTitle>Kelola Peralatan</CardTitle>
-                                <CardDescription>Untuk halaman "Coffee Utensils".</CardDescription>
-                            </div>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                     <Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader><DialogTitle>Edit Konten Peralatan</DialogTitle></DialogHeader>
-                                    <form onSubmit={handleSaveUtensils} className="space-y-4">
-                                         <div className="space-y-2"><Label htmlFor="utensils-title">Judul</Label><Input id="utensils-title" name="title" defaultValue={utensilsData.title} /></div>
-                                        <div className="space-y-2"><Label htmlFor="utensils-description">Deskripsi</Label><Input id="utensils-description" name="description" defaultValue={utensilsData.description} /></div>
-                                        <p className="text-sm text-muted-foreground pt-4">Pengeditan item individu akan segera hadir.</p>
-                                        <DialogFooter>
-                                            <Button type="submit">Simpan Perubahan</Button>
-                                            <Button type="button" variant="ghost" id="close-utensils-dialog">Batal</Button>
-                                        </DialogFooter>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-center py-8 text-muted-foreground">
-                                <p className="font-body text-sm">Fungsionalitas untuk mengedit item peralatan akan segera hadir.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                                <CardDescription>Untuk halaman "Coffee Utensils". Pengeditan item individu akan segera hadir.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleSaveUtensils} className="space-y-4">
+                                        <div className="space-y-2"><Label htmlFor="utensils-title">Judul</Label><Input id="utensils-title" name="title" defaultValue={utensilsData.title} /></div>
+                                    <div className="space-y-2"><Label htmlFor="utensils-description">Deskripsi</Label><Input id="utensils-description" name="description" defaultValue={utensilsData.description} /></div>
+                                    <DialogFooter>
+                                        <Button type="submit">Simpan Perubahan</Button>
+                                    </DialogFooter>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
             </div>
         </main>
     );
