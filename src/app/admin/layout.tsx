@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Coffee, Settings, BookUser, Wrench, Home, Music, ClipboardList, Sparkles, HelpCircle } from 'lucide-react';
+import { Coffee, Settings, BookUser, Wrench, Home, Music, ClipboardList, HelpCircle } from 'lucide-react';
 
 const menuItems = [
   { href: '/admin', label: 'Biji Kopi', icon: Coffee },
@@ -24,7 +24,6 @@ const menuItems = [
   { href: '/admin/kisah-saya', label: 'Kisah Saya', icon: BookUser },
   { href: '/admin/peralatan', label: 'Peralatan', icon: Wrench },
   { href: '/admin/playlist-saya', label: 'Playlist Saya', icon: Music },
-  { href: '/ngobrol', label: 'Asisten Kopi', icon: Sparkles},
   { href: '/admin/pengaturan', label: 'Pengaturan Umum', icon: Settings },
 ];
 

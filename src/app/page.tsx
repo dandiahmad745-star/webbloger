@@ -103,7 +103,6 @@ export default function Home() {
     { name: "Pesan Hari Ini", description: "Sebuah catatan khusus untuk Anda.", url: "/pesan-rahasia", icon: Lock },
     { name: "Playlist Saya", description: "Lagu-lagu yang menemani secangkir kopi.", url: "/playlist-saya", icon: Music },
     { name: "Hubungi Saya", description: "Kirimkan saya email untuk kolaborasi.", url: `mailto:${pageData.contactEmail}`, icon: Mail },
-    { name: "Asisten Kopi", description: "Buat resep baru dengan bantuan AI.", url: "/ngobrol", icon: Sparkles },
   ];
 
   if (!isClient || isLoading) {
