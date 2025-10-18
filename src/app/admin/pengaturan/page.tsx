@@ -9,28 +9,92 @@ import { Label } from "@/components/ui/label";
 import { staticData as initialStaticData } from "../../data-statis";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { themes, type Theme } from "@/lib/themes";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Paintbrush } from "lucide-react";
+
+const ThemeSwitcher = ({ currentTheme, onThemeChange }: { currentTheme: string, onThemeChange: (themeName: string) => void }) => {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="theme-switcher" className="flex items-center gap-2"><Paintbrush className="w-4 h-4"/> Tema Warna</Label>
+      <Select onValueChange={onThemeChange} value={currentTheme}>
+        <SelectTrigger id="theme-switcher">
+          <SelectValue placeholder="Pilih sebuah tema..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {themes.map(theme => (
+              <SelectItem key={theme.name} value={theme.name}>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: `hsl(${theme.light.primary})` }} />
+                  {theme.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+};
+
 
 export default function AdminPengaturanPage() {
     const { toast } = useToast();
     const [settingsData, setSettingsData] = useState(initialStaticData.mainPage);
     const [isClient, setIsClient] = useState(false);
+    const [activeTheme, setActiveTheme] = useState('Kopi Gayo');
 
     useEffect(() => {
         setIsClient(true);
         try {
             const savedSettings = localStorage.getItem('mainPageData');
             if (savedSettings) {
-                // Ensure new secretMessage fields are added if they don't exist
                 const parsed = JSON.parse(savedSettings);
                 if (!parsed.secretMessage) {
                     parsed.secretMessage = initialStaticData.mainPage.secretMessage;
                 }
                 setSettingsData(parsed);
             }
+            const savedTheme = localStorage.getItem('activeTheme');
+            if (savedTheme) {
+                handleThemeChange(savedTheme, false);
+            } else {
+                 handleThemeChange('Kopi Gayo', false);
+            }
+
         } catch (error) {
             console.error("Failed to parse from localStorage", error);
         }
     }, []);
+
+    const handleThemeChange = (themeName: string, showToast = true) => {
+        const theme = themes.find(t => t.name === themeName);
+        if (!theme) return;
+
+        const root = document.documentElement;
+        Object.entries(theme.light).forEach(([key, value]) => {
+            root.style.setProperty(`--${key}`, value);
+        });
+        Object.entries(theme.dark).forEach(([key, value]) => {
+            root.style.setProperty(`--${key}-dark`, value);
+        });
+        
+        const darkTheme = document.querySelector('.dark');
+        if (darkTheme) {
+             Object.entries(theme.dark).forEach(([key, value]) => {
+                (darkTheme as HTMLElement).style.setProperty(`--${key}`, value);
+            });
+        }
+
+
+        setActiveTheme(themeName);
+        localStorage.setItem('activeTheme', themeName);
+        if (showToast) {
+            toast({ title: "Tema Diubah!", description: `Tema ${themeName} telah diterapkan.` });
+        }
+    }
+
 
     const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -59,11 +123,14 @@ export default function AdminPengaturanPage() {
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
             <CardHeader>
                 <CardTitle>Pengaturan Umum</CardTitle>
-                <CardDescription>Kelola konten untuk halaman utama dan kontak.</CardDescription>
+                <CardDescription>Kelola konten untuk halaman utama, kontak, dan tema visual.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSave} className="space-y-4">
-                    <h3 className="text-lg font-medium text-primary border-b pb-2">Halaman Utama</h3>
+                    <h3 className="text-lg font-medium text-primary border-b pb-2">Tampilan & Tema</h3>
+                    <ThemeSwitcher currentTheme={activeTheme} onThemeChange={(themeName) => handleThemeChange(themeName)} />
+                    
+                    <h3 className="text-lg font-medium text-primary border-b pb-2 pt-4">Halaman Utama</h3>
                     <div className="space-y-2">
                         <Label htmlFor="name">Nama</Label>
                         <Input id="name" name="name" defaultValue={settingsData.name} />
