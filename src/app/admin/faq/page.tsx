@@ -1,17 +1,19 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
+import useSWR from 'swr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { staticData as initialStaticData, type FAQItem } from "../../data-statis";
+import { type FAQItem } from "../../data-statis";
 import { useToast } from "@/hooks/use-toast";
 import { Edit, Plus, Trash2, Download, UploadCloud, FileJson } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { fetcher, postData } from '@/lib/api';
 
 const FAQForm = ({ item, onSubmit, closeBtnId }: { item?: FAQItem, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => (
      <form onSubmit={onSubmit} className="space-y-4">
@@ -35,30 +37,12 @@ const FAQForm = ({ item, onSubmit, closeBtnId }: { item?: FAQItem, onSubmit: (e:
 
 export default function AdminFAQPage() {
     const { toast } = useToast();
-    const [faqData, setFaqData] = useState<FAQItem[]>(initialStaticData.faqData);
-    const [isClient, setIsClient] = useState(false);
+    const { data: faqData, error, mutate, isLoading } = useSWR<FAQItem[]>('/api/data?key=faqData', fetcher);
     const importFileInputRef = useRef<HTMLInputElement>(null);
     const [jsonInput, setJsonInput] = useState('');
     const [isPasteImportOpen, setIsPasteImportOpen] = useState(false);
 
-    useEffect(() => {
-        setIsClient(true);
-        try {
-            const savedData = localStorage.getItem('faqData');
-            if (savedData) {
-                setFaqData(JSON.parse(savedData));
-            }
-        } catch (error) {
-            console.error("Failed to parse from localStorage", error);
-        }
-    }, []);
-
-    const saveData = (data: FAQItem[]) => {
-        setFaqData(data);
-        localStorage.setItem('faqData', JSON.stringify(data));
-    }
-
-    const handleSaveItem = (e: React.FormEvent<HTMLFormElement>, itemId?: string) => {
+    const handleSaveItem = async (e: React.FormEvent<HTMLFormElement>, itemId?: string) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const newItemData: Omit<FAQItem, 'id'> = {
@@ -68,30 +52,42 @@ export default function AdminFAQPage() {
 
         let updatedItems;
         if (itemId) {
-            updatedItems = faqData.map(item => item.id === itemId ? { ...item, ...newItemData } : item);
+            updatedItems = faqData!.map(item => item.id === itemId ? { ...item, ...newItemData } : item);
         } else {
-            if (faqData.some(item => item.question.toLowerCase() === newItemData.question.toLowerCase())) {
+            if (faqData?.some(item => item.question.toLowerCase() === newItemData.question.toLowerCase())) {
                 toast({ variant: "destructive", title: "Gagal", description: `Pertanyaan "${newItemData.question}" sudah ada.` });
                 return;
             }
             const newId = `faq-${Date.now()}`;
-            updatedItems = [...faqData, {id: newId, ...newItemData}];
+            updatedItems = [...(faqData || []), {id: newId, ...newItemData}];
         }
         
-        saveData(updatedItems);
-        toast({ title: "Sukses!", description: `Item FAQ telah disimpan.` });
+        try {
+            await postData('faqData', updatedItems);
+            mutate(updatedItems, false);
+            toast({ title: "Sukses!", description: `Item FAQ telah disimpan.` });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Gagal Menyimpan", description: "Tidak dapat menyimpan data ke server." });
+        }
         
         const closeBtnId = itemId ? `close-faq-${itemId}-dialog` : 'close-faq-new-dialog';
         document.getElementById(closeBtnId)?.click();
     };
 
-    const handleDeleteItem = (itemId: string) => {
+    const handleDeleteItem = async (itemId: string) => {
+        if (!faqData) return;
         const updatedItems = faqData.filter(item => item.id !== itemId);
-        saveData(updatedItems);
-        toast({ title: "Dihapus!", description: `Item FAQ telah dihapus.` });
+        try {
+            await postData('faqData', updatedItems);
+            mutate(updatedItems, false);
+            toast({ title: "Dihapus!", description: `Item FAQ telah dihapus.` });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Gagal Menghapus", description: "Tidak dapat menghapus data dari server." });
+        }
     };
 
     const handleExport = () => {
+        if (!faqData) return;
         const dataStr = JSON.stringify(faqData, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
         const exportFileDefaultName = 'faq.json';
@@ -106,12 +102,12 @@ export default function AdminFAQPage() {
         importFileInputRef.current?.click();
     };
 
-    const processImportedData = (importedItems: any[]) => {
+    const processImportedData = async (importedItems: any[]) => {
         if (!Array.isArray(importedItems) || !importedItems.every(item => 'question' in item && 'answer' in item)) {
             throw new Error("Invalid JSON format.");
         }
         
-        const currentItems = [...faqData];
+        const currentItems = [...(faqData || [])];
         let newItemsCount = 0;
         let skippedCount = 0;
 
@@ -130,25 +126,32 @@ export default function AdminFAQPage() {
             }
         });
 
-        saveData(currentItems);
+        try {
+            await postData('faqData', currentItems);
+            mutate(currentItems, false);
 
-        if (newItemsCount > 0) {
-            toast({ title: "Impor Berhasil", description: `${newItemsCount} item baru ditambahkan. ${skippedCount} item duplikat dilewati.` });
-        } else {
-            toast({ title: "Tidak Ada Item Baru", description: "Semua item dalam file sudah ada di koleksi Anda." });
+            if (newItemsCount > 0) {
+                toast({ title: "Impor Berhasil", description: `${newItemsCount} item baru ditambahkan. ${skippedCount} item duplikat dilewati.` });
+            } else {
+                toast({ title: "Tidak Ada Item Baru", description: "Semua item dalam file sudah ada di koleksi Anda." });
+            }
+            return true;
+
+        } catch (error) {
+             toast({ variant: "destructive", title: "Gagal Menyimpan", description: "Tidak dapat menyimpan data impor ke server." });
+             return false;
         }
-        return true;
     };
     
     const handleImportFromFile = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const text = e.target?.result as string;
                     const importedData = JSON.parse(text);
-                    processImportedData(importedData);
+                    await processImportedData(importedData);
                 } catch (error) {
                     toast({ variant: "destructive", title: "Impor Gagal", description: "File JSON tidak valid atau formatnya salah." });
                 }
@@ -158,14 +161,14 @@ export default function AdminFAQPage() {
         if (event.target) event.target.value = '';
     };
 
-    const handleImportFromJsonText = () => {
+    const handleImportFromJsonText = async () => {
         if (!jsonInput.trim()) {
             toast({ variant: "destructive", title: "Input Kosong", description: "Silakan tempel konten JSON." });
             return;
         }
         try {
             const importedData = JSON.parse(jsonInput);
-            if (processImportedData(importedData)) {
+            if (await processImportedData(importedData)) {
                 setJsonInput('');
                 setIsPasteImportOpen(false);
             }
@@ -174,9 +177,7 @@ export default function AdminFAQPage() {
         }
     };
 
-    if (!isClient) {
-        return null;
-    }
+    if (error) return <div className="text-red-500">Gagal memuat data. Silakan coba lagi.</div>;
 
     return (
         <>
@@ -187,8 +188,14 @@ export default function AdminFAQPage() {
                         <CardDescription>Tambah, edit, atau hapus pertanyaan dan jawaban.</CardDescription>
                     </div>
                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
-                         <DropdownMenu>
+                        <Dialog>
+                            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah</Button></DialogTrigger>
+                            <DialogContent className="max-w-lg">
+                                <DialogHeader><DialogTitle>Tambah Item FAQ Baru</DialogTitle></DialogHeader>
+                                <FAQForm onSubmit={(e) => handleSaveItem(e)} closeBtnId="close-faq-new-dialog" />
+                            </DialogContent>
+                        </Dialog>
+                        <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="icon"><UploadCloud className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
@@ -202,23 +209,20 @@ export default function AdminFAQPage() {
                                     Impor dari Teks...
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator/>
-                                <DropdownMenuItem onSelect={handleExport}>
+                                <DropdownMenuItem onSelect={handleExport} disabled={!faqData || faqData.length === 0}>
                                     <Download className="mr-2 h-4 w-4" />
                                     Ekspor ke JSON
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Dialog>
-                            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah</Button></DialogTrigger>
-                            <DialogContent className="max-w-lg">
-                                <DialogHeader><DialogTitle>Tambah Item FAQ Baru</DialogTitle></DialogHeader>
-                                <FAQForm onSubmit={(e) => handleSaveItem(e)} closeBtnId="close-faq-new-dialog" />
-                            </DialogContent>
-                        </Dialog>
+                        <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {faqData.map(item => (
+                    {isLoading && Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-14 w-full" />
+                    ))}
+                    {faqData && faqData.map(item => (
                          <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                             <p className="font-medium truncate pr-4">{item.question}</p>
                             <div className="flex items-center gap-2 flex-shrink-0">
@@ -233,7 +237,7 @@ export default function AdminFAQPage() {
                             </div>
                         </div>
                     ))}
-                     {faqData.length === 0 && (
+                     {faqData && faqData.length === 0 && (
                         <p className="text-center text-muted-foreground py-8">Belum ada data FAQ.</p>
                      )}
                 </CardContent>

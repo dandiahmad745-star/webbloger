@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
 
   useEffect(() => {
-    // Apply the saved theme on initial load
+    // Apply the saved theme on initial load. Only runs on client.
     const savedThemeName = localStorage.getItem('activeTheme');
     const theme = themes.find(t => t.name === savedThemeName) || themes.find(t => t.name === 'Kopi Gayo'); // Fallback to Gayo
 
@@ -39,7 +39,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
         <title>BioLink Elegance</title>
         <meta name="description" content="An elegant biolink page for professionals." />

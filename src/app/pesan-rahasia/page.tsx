@@ -1,7 +1,4 @@
 
-'use client';
-
-import { useState, useEffect } from 'react';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,49 +6,25 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import { pesanHarian } from '@/lib/pesan-harian';
+import { fetchServerData } from "@/lib/api";
 
-export default function PesanRahasiaPage() {
-    const [pageData, setPageData] = useState({ title: "Pesan Hari Ini", message: "" });
-    const [isClient, setIsClient] = useState(false);
-    const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
-    const [backgroundImage, setBackgroundImage] = useState<ImagePlaceholder | undefined>();
+export default async function PesanRahasiaPage() {
+    // Select daily message based on the date
+    const today = new Date();
+    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
+    const messageIndex = dayOfYear % pesanHarian.length;
+    const dailyMessage = pesanHarian[messageIndex];
+    const pageData = { title: "Pesan Hari Ini", message: dailyMessage };
 
-    useEffect(() => {
-        setIsClient(true);
-        
-        // Pilih pesan harian berdasarkan tanggal
-        const today = new Date();
-        const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
-        const messageIndex = dayOfYear % pesanHarian.length;
-        const dailyMessage = pesanHarian[messageIndex];
-
-        // Ambil data gambar dari local storage jika ada
-        let currentAllImages = [...PlaceHolderImages];
-        try {
-            const savedUserImages = localStorage.getItem('userImages');
-            if (savedUserImages) {
-                currentAllImages.push(...JSON.parse(savedUserImages));
-            }
-        } catch (error) {
-            console.error("Failed to parse user images from localStorage", error);
-        }
-        setAllImages(currentAllImages);
-
-        // Pilih gambar secara acak berdasarkan tanggal juga, agar gambar & pesan konsisten seharian
-        const imageIndex = dayOfYear % currentAllImages.length;
-        const dailyImage = currentAllImages[imageIndex];
-        
-        setBackgroundImage(dailyImage);
-        setPageData(prev => ({ ...prev, message: dailyMessage }));
-
-    }, []);
+    const userImages = await fetchServerData('userImages', []);
+    const allImages = [...PlaceHolderImages, ...userImages];
+    
+    // Select image randomly based on the date as well, to keep image & message consistent for the day
+    const imageIndex = dayOfYear % allImages.length;
+    const backgroundImage = allImages[imageIndex];
 
     const { title, message } = pageData;
     
-    if (!isClient) {
-        return <div className="min-h-screen bg-background" />; // Or a loading spinner
-    }
-
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 fade-in bg-background">
             <div className="w-full max-w-2xl mx-auto relative">

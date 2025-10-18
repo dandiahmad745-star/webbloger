@@ -2,115 +2,22 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
+import useSWR from 'swr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { staticData as initialStaticData, type CoffeeRecipe } from "../../data-statis";
+import { type CoffeeRecipe } from "../../data-statis";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Plus, Trash2, Upload, Download, UploadCloud, FileJson } from "lucide-react";
-import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { Edit, Plus, Trash2, Download, UploadCloud, FileJson } from "lucide-react";
+import { ImagePicker } from "@/components/image-picker";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { worldRegions, allCountries, type City } from "@/lib/world-regions";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
-const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
-    const [currentSelection, setCurrentSelection] = useState(currentImageId);
-    const [userImages, setUserImages] = useState<ImagePlaceholder[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { toast } = useToast();
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const loadImages = () => {
-                try {
-                    const savedUserImages = localStorage.getItem('userImages');
-                    if (savedUserImages) {
-                        setUserImages(JSON.parse(savedUserImages));
-                    }
-                } catch (error) {
-                    console.error("Failed to parse user images from localStorage", error);
-                }
-            };
-            loadImages();
-            window.addEventListener('storage', loadImages);
-            return () => window.removeEventListener('storage', loadImages);
-        }
-    }, []);
-    
-    useEffect(() => {
-        setCurrentSelection(currentImageId);
-    }, [currentImageId]);
-
-    const handleSelect = (id: string) => {
-        setCurrentSelection(id);
-        onSelect(id);
-    }
-
-    const handleUploadClick = () => fileInputRef.current?.click();
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            if (file.size > 500 * 1024) { // 500KB limit
-                toast({
-                    variant: "destructive",
-                    title: "Ukuran file terlalu besar",
-                    description: "Ukuran gambar tidak boleh melebihi 500KB untuk menghemat ruang penyimpanan browser.",
-                });
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const dataUrl = e.target?.result as string;
-                const newImageId = `user-img-${Date.now()}`;
-                const newImage: ImagePlaceholder = { id: newImageId, imageUrl: dataUrl, description: file.name, imageHint: 'custom upload' };
-                
-                try {
-                    const existingImagesRaw = localStorage.getItem('userImages');
-                    const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
-                    const updatedUserImages = [...existingImages, newImage];
-
-                    setUserImages(updatedUserImages);
-                    localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
-                    handleSelect(newImageId);
-                    
-                    toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
-
-                    window.dispatchEvent(new Event('storage'));
-                } catch (error) {
-                     toast({
-                        variant: "destructive",
-                        title: "Penyimpanan Penuh",
-                        description: "Gagal menyimpan gambar. Penyimpanan lokal browser mungkin penuh. Coba gunakan gambar yang lebih kecil.",
-                    });
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
-    const allImages = [...PlaceHolderImages, ...userImages];
-
-    return (
-        <div className="space-y-2">
-            <Label>Pilih Gambar</Label>
-            <div className="grid grid-cols-4 md:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
-                {allImages.map(img => (
-                    <div key={img.id} className={cn("relative aspect-square rounded-md overflow-hidden cursor-pointer border-2", currentSelection === img.id ? 'border-primary' : 'border-transparent')} onClick={() => handleSelect(img.id)}>
-                        <Image src={img.imageUrl} alt={img.description} fill className="object-cover" />
-                    </div>
-                ))}
-            </div>
-             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-             <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}><Upload className="h-4 w-4 mr-2" />Unggah Foto (Maks 500KB)</Button>
-        </div>
-    )
-}
+import { fetcher, postData } from '@/lib/api';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const RecipeForm = ({ recipe, onSubmit, closeBtnId, onSelectImage, onCountryChange, onCityChange, selectedCountry, selectedCity, availableCities }: { 
     recipe?: CoffeeRecipe, 
@@ -175,10 +82,9 @@ const RecipeForm = ({ recipe, onSubmit, closeBtnId, onSelectImage, onCountryChan
 
 export default function AdminResepKopiPage() {
     const { toast } = useToast();
-    const [recipesData, setRecipesData] = useState<CoffeeRecipe[]>(initialStaticData.resepKopi);
-    const [isClient, setIsClient] = useState(false);
-    const [selectedImage, setSelectedImage] = useState('');
+    const { data: recipesData, error, mutate, isLoading } = useSWR<CoffeeRecipe[]>('/api/data?key=resepKopiData', fetcher);
     
+    const [selectedImage, setSelectedImage] = useState('');
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
     const [availableCities, setAvailableCities] = useState<City[]>([]);
@@ -186,22 +92,11 @@ export default function AdminResepKopiPage() {
     const [jsonInput, setJsonInput] = useState('');
     const [isPasteImportOpen, setIsPasteImportOpen] = useState(false);
 
-
-    useEffect(() => {
-        setIsClient(true);
-        try {
-            const savedRecipes = localStorage.getItem('resepKopiData');
-            if (savedRecipes) setRecipesData(JSON.parse(savedRecipes));
-        } catch (error) {
-            console.error("Failed to parse from localStorage", error);
-        }
-    }, []);
-
     const handleCountryChange = (countryName: string) => {
         setSelectedCountry(countryName);
         const countryData = allCountries.find(c => c.name === countryName);
         setAvailableCities(countryData?.cities || []);
-        setSelectedCity(''); // Reset kota saat negara berubah
+        setSelectedCity('');
     };
 
     const resetCategorySelection = () => {
@@ -210,8 +105,9 @@ export default function AdminResepKopiPage() {
         setAvailableCities([]);
     }
 
-    const handleSaveRecipe = (e: React.FormEvent<HTMLFormElement>, recipeId?: string) => {
+    const handleSaveRecipe = async (e: React.FormEvent<HTMLFormElement>, recipeId?: string) => {
         e.preventDefault();
+        if (!recipesData) return;
         const formData = new FormData(e.currentTarget);
         
         let category = '';
@@ -219,7 +115,7 @@ export default function AdminResepKopiPage() {
             category = selectedCity ? `${selectedCity}, ${selectedCountry}` : selectedCountry;
         }
 
-        const newRecipeData: CoffeeRecipe = {
+        const newRecipeData: Omit<CoffeeRecipe, 'id'> & { id: string } = {
             id: recipeId || `resep-${Date.now()}`,
             name: formData.get('name') as string,
             description: formData.get('description') as string,
@@ -242,22 +138,32 @@ export default function AdminResepKopiPage() {
             updatedRecipes = [...recipesData, newRecipeData];
         }
 
-        setRecipesData(updatedRecipes);
-        localStorage.setItem('resepKopiData', JSON.stringify(updatedRecipes));
-        toast({ title: "Sukses!", description: `Resep ${newRecipeData.name} telah disimpan.` });
+        try {
+            await postData('resepKopiData', updatedRecipes);
+            mutate(updatedRecipes, false);
+            toast({ title: "Sukses!", description: `Resep ${newRecipeData.name} telah disimpan.` });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Gagal Menyimpan", description: "Tidak dapat menyimpan data ke server." });
+        }
         
         const closeBtnId = recipeId ? `close-recipe-${recipeId}-dialog` : 'close-recipe-new-dialog';
         document.getElementById(closeBtnId)?.click();
     };
 
-    const handleDeleteRecipe = (recipeId: string) => {
+    const handleDeleteRecipe = async (recipeId: string) => {
+        if (!recipesData) return;
         const updatedRecipes = recipesData.filter(recipe => recipe.id !== recipeId);
-        setRecipesData(updatedRecipes);
-        localStorage.setItem('resepKopiData', JSON.stringify(updatedRecipes));
-        toast({ title: "Dihapus!", description: "Resep kopi telah dihapus." });
+        try {
+            await postData('resepKopiData', updatedRecipes);
+            mutate(updatedRecipes, false);
+            toast({ title: "Dihapus!", description: "Resep kopi telah dihapus." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Gagal Menghapus", description: "Tidak dapat menghapus data dari server." });
+        }
     };
 
     const handleExport = () => {
+        if (!recipesData) return;
         const dataStr = JSON.stringify(recipesData, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
         const exportFileDefaultName = 'resep-kopi.json';
@@ -272,7 +178,8 @@ export default function AdminResepKopiPage() {
         importFileInputRef.current?.click();
     };
 
-    const processImportedRecipes = (importedRecipes: any[]) => {
+    const processImportedRecipes = async (importedRecipes: any[]) => {
+        if (!recipesData) return false;
         if (!Array.isArray(importedRecipes) || !importedRecipes.every(item => 'id' in item && 'name' in item)) {
             throw new Error("Invalid JSON format.");
         }
@@ -293,16 +200,20 @@ export default function AdminResepKopiPage() {
                 skippedCount++;
             }
         });
-
-        setRecipesData(currentRecipes);
-        localStorage.setItem('resepKopiData', JSON.stringify(currentRecipes));
-
-        if (newRecipesCount > 0) {
-            toast({ title: "Impor Berhasil", description: `${newRecipesCount} resep baru ditambahkan. ${skippedCount} resep duplikat dilewati.` });
-        } else {
-            toast({ title: "Tidak Ada Resep Baru", description: "Semua resep dalam file sudah ada di koleksi Anda." });
+        
+        try {
+            await postData('resepKopiData', currentRecipes);
+            mutate(currentRecipes, false);
+            if (newRecipesCount > 0) {
+                toast({ title: "Impor Berhasil", description: `${newRecipesCount} resep baru ditambahkan. ${skippedCount} resep duplikat dilewati.` });
+            } else {
+                toast({ title: "Tidak Ada Resep Baru", description: "Semua resep dalam file sudah ada di koleksi Anda." });
+            }
+            return true;
+        } catch(e) {
+            toast({ variant: "destructive", title: "Gagal Menyimpan", description: "Tidak dapat menyimpan data impor ke server." });
+            return false;
         }
-        return true;
     };
 
 
@@ -310,11 +221,11 @@ export default function AdminResepKopiPage() {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const text = e.target?.result as string;
                     const importedRecipes = JSON.parse(text);
-                    processImportedRecipes(importedRecipes);
+                    await processImportedRecipes(importedRecipes);
                 } catch (error) {
                     toast({ variant: "destructive", title: "Impor Gagal", description: "File JSON tidak valid atau formatnya salah." });
                 }
@@ -326,14 +237,14 @@ export default function AdminResepKopiPage() {
         }
     };
 
-    const handleImportFromJsonText = () => {
+    const handleImportFromJsonText = async () => {
         if (!jsonInput.trim()) {
             toast({ variant: "destructive", title: "Input Kosong", description: "Silakan tempel konten JSON." });
             return;
         }
         try {
             const importedRecipes = JSON.parse(jsonInput);
-            if (processImportedRecipes(importedRecipes)) {
+            if (await processImportedRecipes(importedRecipes)) {
                 setJsonInput('');
                 setIsPasteImportOpen(false);
             }
@@ -341,11 +252,6 @@ export default function AdminResepKopiPage() {
             toast({ variant: "destructive", title: "Impor Gagal", description: "Teks JSON tidak valid atau formatnya salah." });
         }
     };
-
-
-    if (!isClient) {
-        return null;
-    }
 
     const handleDialogOpening = (open: boolean, recipe?: CoffeeRecipe) => {
         if (!open) {
@@ -376,6 +282,7 @@ export default function AdminResepKopiPage() {
         }
     }
 
+    if (error) return <div className="text-red-500">Gagal memuat data. Silakan coba lagi.</div>;
 
     return (
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg w-full">
@@ -385,27 +292,6 @@ export default function AdminResepKopiPage() {
                     <CardDescription>Tambah, edit, atau hapus resep untuk halaman "Resep Kopi".</CardDescription>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                     <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon"><UploadCloud className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                             <DropdownMenuItem onSelect={handleImportClick}>
-                                <UploadCloud className="mr-2 h-4 w-4" />
-                                Impor dari File...
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setIsPasteImportOpen(true)}>
-                                <FileJson className="mr-2 h-4 w-4" />
-                                Impor dari Teks...
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onSelect={handleExport}>
-                                <Download className="mr-2 h-4 w-4" />
-                                Ekspor ke JSON
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                     <Dialog onOpenChange={(open) => handleDialogOpening(open)}>
                         <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Resep</Button></DialogTrigger>
                         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col"><DialogHeader><DialogTitle>Tambah Resep Baru</DialogTitle></DialogHeader><div className="overflow-y-auto -mr-6 pr-6">
@@ -421,10 +307,32 @@ export default function AdminResepKopiPage() {
                             />
                         </div></DialogContent>
                     </Dialog>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon"><UploadCloud className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                             <DropdownMenuItem onSelect={handleImportClick}>
+                                <UploadCloud className="mr-2 h-4 w-4" />
+                                Impor dari File...
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setIsPasteImportOpen(true)}>
+                                <FileJson className="mr-2 h-4 w-4" />
+                                Impor dari Teks...
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={handleExport} disabled={!recipesData}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Ekspor ke JSON
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
-                {recipesData.map(recipe => (
+                {isLoading && Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+                {recipesData && recipesData.map(recipe => (
                     <div key={recipe.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                         <div>
                             <p className="font-medium">{recipe.name}</p>
@@ -451,6 +359,9 @@ export default function AdminResepKopiPage() {
                         </div>
                     </div>
                 ))}
+                {recipesData && recipesData.length === 0 && !isLoading && (
+                    <p className="text-center text-muted-foreground py-8">Belum ada resep.</p>
+                )}
             </CardContent>
             <Dialog open={isPasteImportOpen} onOpenChange={setIsPasteImportOpen}>
                 <DialogContent>

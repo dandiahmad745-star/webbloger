@@ -1,14 +1,12 @@
 
-'use client';
-
-import { useState, useEffect } from 'react';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Coffee, Wind, Droplets } from "lucide-react";
 import Link from "next/link";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import { staticData as initialStaticData } from "../data-statis";
+import { staticData } from "../data-statis";
+import { fetchServerData } from "@/lib/api";
 
 const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
     Wind,
@@ -16,37 +14,13 @@ const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
     Droplets,
 };
 
-export default function UtensilsPage() {
-    const [pageData, setPageData] = useState(initialStaticData.utensils);
-    const [isClient, setIsClient] = useState(false);
-    const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
-
-    useEffect(() => {
-        setIsClient(true);
-        try {
-            const savedData = localStorage.getItem('utensilsData');
-            const savedUserImages = localStorage.getItem('userImages');
-            
-            const currentAllImages = [...PlaceHolderImages];
-            if (savedUserImages) {
-                currentAllImages.push(...JSON.parse(savedUserImages));
-            }
-            setAllImages(currentAllImages);
-
-            if (savedData) {
-                setPageData(JSON.parse(savedData));
-            }
-        } catch (error) {
-            console.error("Failed to parse from localStorage", error);
-        }
-    }, []);
+export default async function UtensilsPage() {
+    const pageData = await fetchServerData('utensilsData', staticData.utensils);
+    const userImages = await fetchServerData('userImages', []);
+    const allImages = [...PlaceHolderImages, ...userImages];
 
     const { title, description, imageId, items } = pageData;
     const utensilsImage: ImagePlaceholder | undefined = allImages.find(p => p.id === imageId);
-
-    if (!isClient) {
-        return null; // Or a loading spinner
-    }
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 fade-in bg-background">

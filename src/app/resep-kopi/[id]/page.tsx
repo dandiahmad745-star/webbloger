@@ -1,59 +1,29 @@
 
-'use client';
-
-import { useState, useEffect } from 'react';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Coffee, Feather, Globe, Wind } from "lucide-react";
 import Link from "next/link";
-import { staticData as initialStaticData, type CoffeeRecipe } from "../../data-statis";
+import { staticData, type CoffeeRecipe } from "../../data-statis";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import { notFound, useParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { fetchServerData } from "@/lib/api";
 
-export default function RecipeDetailPage() {
-    const params = useParams();
-    const [recipe, setRecipe] = useState<CoffeeRecipe | null>(null);
-    const [isClient, setIsClient] = useState(false);
-    const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
-    const id = params.id as string;
+export default async function RecipeDetailPage({ params }: { params: { id: string } }) {
+    const { id } = params;
+    if (!id) notFound();
 
-    useEffect(() => {
-        setIsClient(true);
-        if(!id) return;
-        
-        try {
-            const savedRecipes = localStorage.getItem('resepKopiData');
-            const savedUserImages = localStorage.getItem('userImages');
-            
-            const currentAllImages = [...PlaceHolderImages];
-            if (savedUserImages) {
-                currentAllImages.push(...JSON.parse(savedUserImages));
-            }
-            setAllImages(currentAllImages);
-
-            const allRecipes = savedRecipes ? JSON.parse(savedRecipes) : initialStaticData.resepKopi;
-            const currentRecipe = allRecipes.find((r: CoffeeRecipe) => r.id === id);
-            setRecipe(currentRecipe || null);
-
-        } catch (error) {
-            console.error("Failed to parse from localStorage", error);
-            const currentRecipe = initialStaticData.resepKopi.find(r => r.id === id);
-            setRecipe(currentRecipe || null);
-        }
-    }, [id]);
-
-    if (!isClient) {
-        // You can return a loading skeleton here
-        return <div className="min-h-screen bg-background" />;
-    }
+    const allRecipes = await fetchServerData('resepKopiData', staticData.resepKopi);
+    const recipe: CoffeeRecipe | undefined = allRecipes.find((r: CoffeeRecipe) => r.id === id);
 
     if (!recipe) {
         notFound();
     }
-
+    
+    const userImages = await fetchServerData('userImages', []);
+    const allImages = [...PlaceHolderImages, ...userImages];
     const recipeImage: ImagePlaceholder | undefined = allImages.find(p => p.id === recipe.imageId);
 
     const infoItems = [
@@ -73,6 +43,7 @@ export default function RecipeDetailPage() {
                         data-ai-hint={recipeImage.imageHint}
                         fill
                         className="object-cover"
+                        priority
                     />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />

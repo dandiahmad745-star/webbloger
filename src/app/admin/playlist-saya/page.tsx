@@ -2,114 +2,21 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
+import useSWR from 'swr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { staticData as initialStaticData, type Playlist, type Song } from "../../data-statis";
+import { type Playlist, type Song } from "../../data-statis";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Plus, Trash2, Upload, Music, Download, UploadCloud, FileJson } from "lucide-react";
-import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { Edit, Plus, Trash2, Music, Download, UploadCloud, FileJson } from "lucide-react";
+import { ImagePicker } from "@/components/image-picker";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
-const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
-    const [currentSelection, setCurrentSelection] = useState(currentImageId);
-    const [userImages, setUserImages] = useState<ImagePlaceholder[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { toast } = useToast();
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const loadImages = () => {
-                try {
-                    const savedUserImages = localStorage.getItem('userImages');
-                    if (savedUserImages) {
-                        setUserImages(JSON.parse(savedUserImages));
-                    }
-                } catch (error) {
-                    console.error("Failed to parse user images from localStorage", error);
-                }
-            };
-            loadImages();
-            window.addEventListener('storage', loadImages);
-            return () => window.removeEventListener('storage', loadImages);
-        }
-    }, []);
-    
-    useEffect(() => {
-        setCurrentSelection(currentImageId);
-    }, [currentImageId]);
-
-    const handleSelect = (id: string) => {
-        setCurrentSelection(id);
-        onSelect(id);
-    }
-
-    const handleUploadClick = () => fileInputRef.current?.click();
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-             if (file.size > 500 * 1024) { // 500KB limit
-                toast({
-                    variant: "destructive",
-                    title: "Ukuran file terlalu besar",
-                    description: "Ukuran gambar tidak boleh melebihi 500KB untuk menghemat ruang penyimpanan browser.",
-                });
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const dataUrl = e.target?.result as string;
-                const newImageId = `user-img-${Date.now()}`;
-                const newImage: ImagePlaceholder = { id: newImageId, imageUrl: dataUrl, description: file.name, imageHint: 'custom upload' };
-                
-                try {
-                    const existingImagesRaw = localStorage.getItem('userImages');
-                    const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
-                    const updatedUserImages = [...existingImages, newImage];
-
-                    setUserImages(updatedUserImages);
-                    localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
-                    handleSelect(newImageId);
-                    
-                    toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
-
-                    window.dispatchEvent(new Event('storage'));
-                } catch (error) {
-                     toast({
-                        variant: "destructive",
-                        title: "Penyimpanan Penuh",
-                        description: "Gagal menyimpan gambar. Penyimpanan lokal browser mungkin penuh. Coba gunakan gambar yang lebih kecil.",
-                    });
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
-    const allImages = [...PlaceHolderImages, ...userImages];
-
-    return (
-        <div className="space-y-2">
-            <Label>Pilih Gambar Latar</Label>
-            <div className="grid grid-cols-4 md:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
-                {allImages.map(img => (
-                    <div key={img.id} className={cn("relative aspect-square rounded-md overflow-hidden cursor-pointer border-2", currentSelection === img.id ? 'border-primary' : 'border-transparent')} onClick={() => handleSelect(img.id)}>
-                        <Image src={img.imageUrl} alt={img.description} fill className="object-cover" />
-                    </div>
-                ))}
-            </div>
-             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-             <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}><Upload className="h-4 w-4 mr-2" />Unggah Foto (Maks 500KB)</Button>
-        </div>
-    )
-}
+import { fetcher, postData } from '@/lib/api';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PlaylistForm = ({ playlist, onSubmit, onSelectImage, closeBtnId }: { playlist?: Playlist, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, onSelectImage: (id: string) => void, closeBtnId: string }) => (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -125,51 +32,57 @@ const PlaylistForm = ({ playlist, onSubmit, onSelectImage, closeBtnId }: { playl
     </form>
 );
 
-const SongForm = ({ onSubmit, closeBtnId }: { onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => (
-    <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2"><Label htmlFor="song-title">Judul Lagu</Label><Input id="song-title" name="title" required /></div>
-        <div className="space-y-2"><Label htmlFor="artist">Artis</Label><Input id="artist" name="artist" required /></div>
-        <div className="space-y-2"><Label htmlFor="audio-file">File Audio (Maks 2MB)</Label><Input id="audio-file" name="audio-file" type="file" accept="audio/*" required /></div>
-        <DialogFooter>
-            <Button type="submit">Simpan Lagu</Button>
-            <DialogTrigger asChild>
-                <Button type="button" variant="ghost" id={closeBtnId}>Batal</Button>
-            </DialogTrigger>
-        </DialogFooter>
-    </form>
-);
+const SongForm = ({ onSubmit, closeBtnId }: { onSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<boolean>, closeBtnId: string }) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        const success = await onSubmit(e);
+        setIsSubmitting(false);
+        if (success) {
+            document.getElementById(closeBtnId)?.click();
+        }
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2"><Label htmlFor="song-title">Judul Lagu</Label><Input id="song-title" name="title" required /></div>
+            <div className="space-y-2"><Label htmlFor="artist">Artis</Label><Input id="artist" name="artist" required /></div>
+            <div className="space-y-2"><Label htmlFor="audio-file">File Audio (Maks 2MB)</Label><Input id="audio-file" name="audio-file" type="file" accept="audio/*" required /></div>
+            <DialogFooter>
+                <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Menyimpan...' : 'Simpan Lagu'}</Button>
+                <DialogTrigger asChild>
+                    <Button type="button" variant="ghost" id={closeBtnId}>Batal</Button>
+                </DialogTrigger>
+            </DialogFooter>
+        </form>
+    );
+};
 
 export default function AdminPlaylistSayaPage() {
     const { toast } = useToast();
-    const [playlistsData, setPlaylistsData] = useState<Playlist[]>(initialStaticData.playlistSaya);
-    const [isClient, setIsClient] = useState(false);
+    const { data: playlistsData, error, mutate, isLoading } = useSWR<Playlist[]>('/api/data?key=playlistSayaData', fetcher);
+
     const [selectedImage, setSelectedImage] = useState('');
     const importFileInputRef = useRef<HTMLInputElement>(null);
     const [jsonInput, setJsonInput] = useState('');
     const [isPasteImportOpen, setIsPasteImportOpen] = useState(false);
 
-
-    useEffect(() => {
-        setIsClient(true);
+    const saveData = async (data: Playlist[]) => {
         try {
-            const savedData = localStorage.getItem('playlistSayaData');
-            if (savedData) {
-                const parsedData = JSON.parse(savedData);
-                setPlaylistsData(parsedData);
-            }
+            await postData('playlistSayaData', data);
+            mutate(data, false);
+            return true;
         } catch (error) {
-            console.error("Failed to parse from localStorage", error);
+            toast({ variant: "destructive", title: "Gagal Menyimpan", description: "Tidak dapat menyimpan data ke server." });
+            return false;
         }
-    }, []);
-
-    const saveData = (data: Playlist[]) => {
-        setPlaylistsData(data);
-        localStorage.setItem('playlistSayaData', JSON.stringify(data));
     };
 
-    const handleSavePlaylist = (e: React.FormEvent<HTMLFormElement>, playlistId?: string) => {
+    const handleSavePlaylist = async (e: React.FormEvent<HTMLFormElement>, playlistId?: string) => {
         e.preventDefault();
+        if (!playlistsData) return;
         const formData = new FormData(e.currentTarget);
         
         let updatedPlaylists;
@@ -197,86 +110,92 @@ export default function AdminPlaylistSayaPage() {
             toast({ title: "Sukses!", description: "Playlist baru telah ditambahkan." });
         }
         
-        saveData(updatedPlaylists);
-        const closeBtnId = playlistId ? `close-playlist-${playlistId}-dialog` : 'close-playlist-new-dialog';
-        document.getElementById(closeBtnId)?.click();
+        if (await saveData(updatedPlaylists)) {
+            const closeBtnId = playlistId ? `close-playlist-${playlistId}-dialog` : 'close-playlist-new-dialog';
+            document.getElementById(closeBtnId)?.click();
+        }
     };
 
-    const handleDeletePlaylist = (playlistId: string) => {
+    const handleDeletePlaylist = async (playlistId: string) => {
+        if (!playlistsData) return;
         const updatedPlaylists = playlistsData.filter(pl => pl.id !== playlistId);
-        saveData(updatedPlaylists);
-        toast({ title: "Dihapus!", description: "Playlist telah dihapus." });
+        if (await saveData(updatedPlaylists)) {
+            toast({ title: "Dihapus!", description: "Playlist telah dihapus." });
+        }
     };
 
-    const handleSaveSong = (e: React.FormEvent<HTMLFormElement>, playlistId: string) => {
-        e.preventDefault();
+    const handleSaveSong = async (e: React.FormEvent<HTMLFormElement>, playlistId: string): Promise<boolean> => {
+        if (!playlistsData) return false;
         const formData = new FormData(e.currentTarget);
         const audioFile = (e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement)?.files?.[0];
 
         if (!audioFile) {
             toast({ variant: "destructive", title: "File Audio Dibutuhkan", description: "Silakan unggah file audio." });
-            return;
+            return false;
         }
 
         if (audioFile.size > 2 * 1024 * 1024) { // 2MB limit
             toast({ variant: "destructive", title: "Ukuran file terlalu besar", description: "Ukuran file audio tidak boleh melebihi 2MB." });
-            return;
+            return false;
         }
         
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const audioUrl = event.target?.result as string;
-            const newSong: Song = {
-                title: formData.get('title') as string,
-                artist: formData.get('artist') as string,
-                audioUrl: audioUrl
-            };
-            
-            const updatedPlaylists = playlistsData.map(pl => {
-                if (pl.id === playlistId) {
-                    // Check for duplicate song titles within the same playlist
-                    if (pl.songs.some(s => s.title.toLowerCase() === newSong.title.toLowerCase())) {
-                        toast({ variant: 'destructive', title: 'Gagal', description: `Lagu "${newSong.title}" sudah ada di playlist ini.` });
-                        throw new Error("Duplicate song");
-                    }
-                    return { ...pl, songs: [...pl.songs, newSong] };
-                }
-                return pl;
-            });
-
-            try {
-                saveData(updatedPlaylists);
-                toast({ title: "Sukses!", description: `Lagu ${newSong.title} telah ditambahkan.` });
-                 const closeBtnId = `close-song-new-${playlistId}-dialog`;
-                 document.getElementById(closeBtnId)?.click();
-            } catch (error: any) {
-                if (error.message !== "Duplicate song") {
-                    toast({
-                        variant: "destructive",
-                        title: "Penyimpanan Penuh",
-                        description: "Gagal menyimpan lagu. Penyimpanan lokal browser mungkin penuh.",
-                    });
-                }
-            }
+        const audioUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => resolve(event.target?.result as string);
+            reader.onerror = (error) => reject(error);
+            reader.readAsDataURL(audioFile);
+        });
+        
+        const newSong: Song = {
+            title: formData.get('title') as string,
+            artist: formData.get('artist') as string,
+            audioUrl: audioUrl
         };
-        reader.onerror = () => {
-            toast({ variant: "destructive", title: "Gagal Membaca File", description: "Terjadi kesalahan saat membaca file audio." });
+        
+        let success = false;
+        const updatedPlaylists = playlistsData.map(pl => {
+            if (pl.id === playlistId) {
+                if (pl.songs.some(s => s.title.toLowerCase() === newSong.title.toLowerCase())) {
+                    toast({ variant: 'destructive', title: 'Gagal', description: `Lagu "${newSong.title}" sudah ada di playlist ini.` });
+                    success = false;
+                    return pl;
+                }
+                success = true;
+                return { ...pl, songs: [...pl.songs, newSong] };
+            }
+            return pl;
+        });
+
+        if (success && await saveData(updatedPlaylists)) {
+            toast({ title: "Sukses!", description: `Lagu ${newSong.title} telah ditambahkan.` });
+            return true;
         }
-        reader.readAsDataURL(audioFile);
+        
+        if (!success) {
+             toast({
+                variant: "destructive",
+                title: "Gagal Menyimpan",
+                description: "Terjadi kesalahan saat validasi lagu.",
+            });
+        }
+        return false;
     };
     
-    const handleDeleteSong = (playlistId: string, songTitle: string) => {
+    const handleDeleteSong = async (playlistId: string, songTitle: string) => {
+        if (!playlistsData) return;
         const updatedPlaylists = playlistsData.map(pl => {
             if (pl.id === playlistId) {
                 return { ...pl, songs: pl.songs.filter(song => song.title !== songTitle) };
             }
             return pl;
         });
-        saveData(updatedPlaylists);
-        toast({ title: "Dihapus!", description: `Lagu ${songTitle} telah dihapus.` });
+        if(await saveData(updatedPlaylists)) {
+            toast({ title: "Dihapus!", description: `Lagu ${songTitle} telah dihapus.` });
+        }
     };
 
     const handleExport = () => {
+        if(!playlistsData) return;
         const dataStr = JSON.stringify(playlistsData, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
         const exportFileDefaultName = 'playlist.json';
@@ -291,7 +210,8 @@ export default function AdminPlaylistSayaPage() {
         importFileInputRef.current?.click();
     };
 
-    const processImportedData = (importedData: any[]) => {
+    const processImportedData = async (importedData: any[]) => {
+        if (!playlistsData) return false;
         if (Array.isArray(importedData) && importedData.every(item => 'id' in item && 'title' in item && 'songs' in item)) {
             const currentData = [...playlistsData];
             let newItemsCount = 0;
@@ -307,14 +227,15 @@ export default function AdminPlaylistSayaPage() {
                 }
             });
 
-            saveData(currentData);
-
-            if (newItemsCount > 0) {
-                toast({ title: "Impor Berhasil", description: `${newItemsCount} playlist baru ditambahkan. ${skippedCount} duplikat dilewati.` });
-            } else {
-                toast({ title: "Tidak Ada Playlist Baru", description: "Semua playlist dalam file sudah ada di koleksi Anda." });
+            if (await saveData(currentData)) {
+                 if (newItemsCount > 0) {
+                    toast({ title: "Impor Berhasil", description: `${newItemsCount} playlist baru ditambahkan. ${skippedCount} duplikat dilewati.` });
+                } else {
+                    toast({ title: "Tidak Ada Playlist Baru", description: "Semua playlist dalam file sudah ada di koleksi Anda." });
+                }
+                return true;
             }
-            return true;
+            return false;
         } else {
             throw new Error("Invalid JSON format.");
         }
@@ -324,11 +245,11 @@ export default function AdminPlaylistSayaPage() {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const text = e.target?.result as string;
                     const importedData = JSON.parse(text);
-                    processImportedData(importedData);
+                    await processImportedData(importedData);
                 } catch (error) {
                     toast({ variant: "destructive", title: "Impor Gagal", description: "File JSON tidak valid atau formatnya salah." });
                 }
@@ -338,14 +259,14 @@ export default function AdminPlaylistSayaPage() {
         if (event.target) event.target.value = '';
     };
 
-    const handleImportFromJsonText = () => {
+    const handleImportFromJsonText = async () => {
         if (!jsonInput.trim()) {
             toast({ variant: "destructive", title: "Input Kosong", description: "Silakan tempel konten JSON." });
             return;
         }
         try {
             const importedData = JSON.parse(jsonInput);
-            if (processImportedData(importedData)) {
+            if (await processImportedData(importedData)) {
                 setJsonInput('');
                 setIsPasteImportOpen(false);
             }
@@ -354,9 +275,7 @@ export default function AdminPlaylistSayaPage() {
         }
     };
 
-    if (!isClient) {
-        return null;
-    }
+    if (error) return <div className="text-red-500">Gagal memuat data. Silakan coba lagi.</div>;
     
     return (
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg w-full">
@@ -366,7 +285,15 @@ export default function AdminPlaylistSayaPage() {
                     <CardDescription>Ubah info umum playlist dan kelola daftar lagu.</CardDescription>
                 </div>
                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
+                    <Dialog onOpenChange={(open) => !open && setSelectedImage('')}>
+                        <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Playlist</Button></DialogTrigger>
+                        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+                            <DialogHeader><DialogTitle>Tambah Playlist Baru</DialogTitle></DialogHeader>
+                            <div className="overflow-y-auto -mr-6 pr-6">
+                                <PlaylistForm onSubmit={(e) => handleSavePlaylist(e)} onSelectImage={setSelectedImage} closeBtnId="close-playlist-new-dialog" />
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="icon"><UploadCloud className="h-4 w-4" /></Button>
@@ -381,25 +308,18 @@ export default function AdminPlaylistSayaPage() {
                                 Impor dari Teks...
                             </DropdownMenuItem>
                             <DropdownMenuSeparator/>
-                            <DropdownMenuItem onSelect={handleExport}>
+                            <DropdownMenuItem onSelect={handleExport} disabled={!playlistsData}>
                                 <Download className="mr-2 h-4 w-4" />
                                 Ekspor ke JSON
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-
-                    <Dialog onOpenChange={(open) => !open && setSelectedImage('')}>
-                        <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Playlist</Button></DialogTrigger>
-                        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
-                            <DialogHeader><DialogTitle>Tambah Playlist Baru</DialogTitle></DialogHeader>
-                            <div className="overflow-y-auto -mr-6 pr-6">
-                                <PlaylistForm onSubmit={(e) => handleSavePlaylist(e)} onSelectImage={setSelectedImage} closeBtnId="close-playlist-new-dialog" />
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                    <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
+                {isLoading && <Skeleton className="w-full h-48" />}
+                {playlistsData && (
                 <Accordion type="single" collapsible className="w-full">
                     {playlistsData.map(playlist => (
                         <AccordionItem value={playlist.id} key={playlist.id} className="bg-muted/50 rounded-lg px-4 mb-2 border-b-0">
@@ -455,6 +375,10 @@ export default function AdminPlaylistSayaPage() {
                         </AccordionItem>
                     ))}
                 </Accordion>
+                )}
+                 {playlistsData && playlistsData.length === 0 && !isLoading && (
+                    <p className="text-center text-muted-foreground py-8">Belum ada playlist.</p>
+                )}
             </CardContent>
              <Dialog open={isPasteImportOpen} onOpenChange={setIsPasteImportOpen}>
                 <DialogContent>

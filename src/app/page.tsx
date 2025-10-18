@@ -3,17 +3,19 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Coffee, BookOpen, Utensils, Mail, MessageCircle, Lock, Music, Sparkles, ClipboardList, HelpCircle } from "lucide-react";
+import { Coffee, BookOpen, Utensils, Mail, Sparkles, ClipboardList, HelpCircle, Music } from "lucide-react";
+import { useSWRConfig } from 'swr';
 
 import { LoadingScreen } from "@/components/loading-screen";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import Link from "next/link";
-import { staticData as initialStaticData } from "./data-statis";
+import { staticData } from "./data-statis";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { fetcher } from "@/lib/api";
 
 const FloatingParticles = () => {
     const particles = Array.from({ length: 20 });
@@ -39,60 +41,34 @@ const FloatingParticles = () => {
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [profilePic, setProfilePic] = useState<ImagePlaceholder | undefined>(PlaceHolderImages.find(p => p.id === 'profile-picture'));
-  const [pageData, setPageData] = useState(initialStaticData.mainPage);
-  const [isClient, setIsClient] = useState(false);
-  const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
+  const [pageData, setPageData] = useState(staticData.mainPage);
+  const { cache } = useSWRConfig();
 
   useEffect(() => {
-    // Only run on the client
-    setIsClient(true);
-    
-    const loadData = () => {
-       try {
-        const savedUserImages = localStorage.getItem('userImages');
-        const savedSettings = localStorage.getItem('mainPageData');
-
-        const currentAllImages = [...PlaceHolderImages];
-        if (savedUserImages) {
-            currentAllImages.push(...JSON.parse(savedUserImages));
-        }
-        setAllImages(currentAllImages);
+    async function loadInitialData() {
+      try {
+        let mainPage = cache.get('/api/data?key=mainPageData')?.data || await fetcher('/api/data?key=mainPageData');
+        if (!mainPage) mainPage = staticData.mainPage;
         
-        let currentData = initialStaticData.mainPage;
-        if (savedSettings) {
-            const parsed = JSON.parse(savedSettings);
-             if (!parsed.secretMessage) { // Backwards compatibility
-                parsed.secretMessage = initialStaticData.mainPage.secretMessage;
-            }
-            currentData = parsed;
-            setPageData(parsed);
-        }
+        let userImages = cache.get('/api/data?key=userImages')?.data || await fetcher('/api/data?key=userImages');
+        if (!userImages) userImages = [];
 
-        const pic = currentAllImages.find(p => p.id === (currentData.profileImageId || 'profile-picture'));
+        const allImages = [...PlaceHolderImages, ...userImages];
+        
+        setPageData(mainPage);
+        const pic = allImages.find(p => p.id === (mainPage.profileImageId || 'profile-picture'));
         setProfilePic(pic);
       } catch (e) {
-          console.error("Failed to load from local storage", e);
-          // Fallback to initial data if localStorage fails
-          setPageData(initialStaticData.mainPage);
-          setProfilePic(PlaceHolderImages.find(p => p.id === 'profile-picture'));
+        console.error("Failed to load from API, falling back to static data", e);
+        setPageData(staticData.mainPage);
+        setProfilePic(PlaceHolderImages.find(p => p.id === 'profile-picture'));
+      } finally {
+        const loadingTimer = setTimeout(() => setIsLoading(false), 1000);
+        return () => clearTimeout(loadingTimer);
       }
     }
-    
-    loadData();
-    
-    const handleStorageChange = () => {
-        loadData();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    const loadingTimer = setTimeout(() => setIsLoading(false), 1000);
-
-    return () => {
-        window.removeEventListener('storage', handleStorageChange);
-        clearTimeout(loadingTimer);
-    };
-  }, []);
+    loadInitialData();
+  }, [cache]);
 
   const socialLinks = [
     { name: "Learn Coffee", description: "Jelajahi berbagai jenis biji kopi.", url: "/learn-coffee", icon: Coffee },
@@ -100,12 +76,11 @@ export default function Home() {
     { name: "Tanya Jawab (FAQ)", description: "Temukan jawaban dari pertanyaan umum.", url: "/faq", icon: HelpCircle },
     { name: "Kisah Saya", description: "Perjalanan saya dalam dunia kopi.", url: "/kisah-saya", icon: BookOpen },
     { name: "Peralatan Kopi", description: "Alat-alat untuk secangkir kopi sempurna.", url: "/learn-coffee-utensils", icon: Utensils },
-    { name: "Pesan Hari Ini", description: "Sebuah catatan khusus untuk Anda.", url: "/pesan-rahasia", icon: Lock },
     { name: "Playlist Saya", description: "Lagu-lagu yang menemani secangkir kopi.", url: "/playlist-saya", icon: Music },
     { name: "Hubungi Saya", description: "Kirimkan saya email untuk kolaborasi.", url: `mailto:${pageData.contactEmail}`, icon: Mail },
   ];
 
-  if (!isClient || isLoading) {
+  if (isLoading) {
     return <LoadingScreen onLoaded={() => setIsLoading(false)} />;
   }
 

@@ -5,6 +5,13 @@ export type Utensil = {
     icon: string;
 };
 
+export type UtensilsData = {
+    title: string;
+    description: string;
+    imageId: string;
+    items: Utensil[];
+}
+
 export type CoffeeRecipe = {
     id: string;
     name: string;
@@ -37,6 +44,37 @@ export type FAQItem = {
     answer: string;
 };
 
+export type MainPageData = {
+    name: string;
+    tagline: string;
+    bio: string;
+    contactEmail: string;
+    chatWelcome: string;
+    secretMessage: {
+        title: string;
+        content: string;
+    };
+    profileImageId: string;
+}
+
+export type KisahSayaData = {
+    title: string;
+    description: string;
+    imageId: string;
+    paragraphs: string[];
+}
+
+export type AllData = {
+    mainPageData: MainPageData;
+    kisahSayaData: KisahSayaData;
+    utensilsData: UtensilsData;
+    playlistSayaData: Playlist[];
+    resepKopiData: CoffeeRecipe[];
+    faqData: FAQItem[];
+    coffeeBeansData: any[]; // Assuming coffeeBeansData is also managed, type accordingly
+    userImages: any[]; // Assuming userImages is also managed, type accordingly
+}
+
 
 export const staticData = {
     mainPage: {
@@ -50,7 +88,7 @@ export const staticData = {
             content: "Terima kasih telah menemukan ini. Kamu adalah penjelajah sejati, sama seperti caramu menikmati setiap lapisan rasa dalam secangkir kopi. Teruslah mencari dan menemukan keajaiban di tempat-tempat tak terduga."
         },
         profileImageId: "profile-picture",
-    },
+    } as MainPageData,
     kisahSaya: {
         title: "Kisah Saya",
         description: "Perjalanan Pribadi dalam Dunia Kopi",
@@ -60,7 +98,7 @@ export const staticData = {
             "Dari sana, saya memulai perjalanan untuk belajar. Saya menghabiskan waktu bertahun-tahun mengunjungi perkebunan, berbicara dengan para petani, belajar dari para roaster ahli, dan bereksperimen dengan setiap metode seduh yang bisa saya temukan. Kopi menjadi hasrat, obsesi, dan akhirnya, jalan hidup saya.",
             "Melalui \"BioLink Elegance\" ini, saya ingin berbagi sebagian kecil dari perjalanan itu dengan Anda. Setiap tautan adalah sebuah bab dari cerita saya, sebuah undangan untuk menjelajahi dunia kopi melalui mata saya. Terima kasih telah menjadi bagian dari kisah ini."
         ]
-    },
+    } as KisahSayaData,
     utensils: {
         title: "Coffee Utensils",
         description: "Peralatan untuk Secangkir Kopi Sempurna",
@@ -70,7 +108,7 @@ export const staticData = {
             { name: "Aeropress", description: "Alat serbaguna yang menghasilkan kopi kaya rasa dengan tingkat keasaman rendah.", icon: "Coffee" },
             { name: "French Press", description: "Metode rendam yang menghasilkan kopi dengan body penuh dan tekstur yang kaya.", icon: "Droplets" },
         ] as Utensil[]
-    },
+    } as UtensilsData,
     pesanRahasia: {
         title: "Pesan Rahasia",
         message: "Ini adalah pesan rahasia. Hanya untuk mata Anda.",

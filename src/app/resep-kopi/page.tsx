@@ -1,60 +1,21 @@
 
-'use client';
-
-import { useState, useEffect } from 'react';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, ChefHat, Filter } from "lucide-react";
+import { ArrowLeft, ChefHat } from "lucide-react";
 import Link from "next/link";
-import { staticData as initialStaticData, type CoffeeRecipe } from "../data-statis";
+import { staticData, type CoffeeRecipe } from "../data-statis";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from '@/components/ui/dropdown-menu';
-import { worldRegions } from '@/lib/world-regions';
+import { RecipeFilter } from './recipe-filter';
+import { fetchServerData } from "@/lib/api";
 
-export default function ResepKopiPage() {
-    const [allRecipes, setAllRecipes] = useState<CoffeeRecipe[]>(initialStaticData.resepKopi);
-    const [filteredRecipes, setFilteredRecipes] = useState<CoffeeRecipe[]>([]);
-    const [isClient, setIsClient] = useState(false);
-    const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
-    const [filter, setFilter] = useState('Semua');
-
-    useEffect(() => {
-        setIsClient(true);
-        try {
-            const savedData = localStorage.getItem('resepKopiData');
-            const savedUserImages = localStorage.getItem('userImages');
-
-            const currentAllImages = [...PlaceHolderImages];
-            if (savedUserImages) {
-                currentAllImages.push(...JSON.parse(savedUserImages));
-            }
-            setAllImages(currentAllImages);
-
-            const recipes = savedData ? JSON.parse(savedData) : initialStaticData.resepKopi;
-            setAllRecipes(recipes);
-
-        } catch (error) {
-            console.error("Failed to parse from localStorage", error);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (filter === 'Semua') {
-            setFilteredRecipes(allRecipes);
-        } else {
-            setFilteredRecipes(allRecipes.filter(recipe => recipe.category.includes(filter)));
-        }
-    }, [filter, allRecipes]);
-
+export default async function ResepKopiPage() {
+    const allRecipes = await fetchServerData('resepKopiData', staticData.resepKopi);
+    const userImages = await fetchServerData('userImages', []);
+    const allImages = [...PlaceHolderImages, ...userImages];
     const pageImage: ImagePlaceholder | undefined = allImages.find(p => p.id === 'coffee-journey-alt');
-
-    if (!isClient) {
-        return null; // Or a loading spinner
-    }
-
-    const allCategories = ['Semua', ...worldRegions.flatMap(c => c.countries).map(co => co.name)];
+    const mainPageData = await fetchServerData('mainPageData', staticData.mainPage);
 
     return (
         <main className="min-h-screen w-full bg-background text-foreground fade-in">
@@ -85,76 +46,65 @@ export default function ResepKopiPage() {
                                     Temukan inspirasi dan panduan untuk menciptakan secangkir kopi sempurna versi Anda.
                                 </p>
                             </div>
-                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="bg-white/90 text-primary hover:bg-white backdrop-blur-sm">
-                                        <Filter className="w-4 h-4 mr-2" />
-                                        Filter: {filter}
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuLabel>Filter berdasarkan Wilayah</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onSelect={() => setFilter('Semua')}>Semua</DropdownMenuItem>
-                                     {worldRegions.map(continent => (
-                                        <DropdownMenuSub key={continent.name}>
-                                            <DropdownMenuSubTrigger>{continent.name}</DropdownMenuSubTrigger>
-                                            <DropdownMenuPortal>
-                                                <DropdownMenuSubContent>
-                                                    {continent.countries.map(country => (
-                                                        <DropdownMenuItem key={country.name} onSelect={() => setFilter(country.name)}>
-                                                            {country.name}
-                                                        </DropdownMenuItem>
-                                                    ))}
-                                                </DropdownMenuSubContent>
-                                            </DropdownMenuPortal>
-                                        </DropdownMenuSub>
-                                     ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <RecipeFilter />
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="p-8 md:p-12 -mt-16">
-                <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredRecipes.map((recipe) => {
-                         const recipeImage = allImages.find(p => p.id === recipe.imageId);
-                        return(
-                        <Link href={`/resep-kopi/${recipe.id}`} key={recipe.id} passHref>
-                            <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg hover:shadow-primary/10 transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-full group hover:-translate-y-1">
-                            {recipeImage && (
-                                <CardHeader className="p-0 relative h-48">
-                                    <Image
-                                        src={recipeImage.imageUrl}
-                                        alt={recipe.name}
-                                        data-ai-hint={recipeImage.imageHint}
-                                        fill
-                                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                </CardHeader>
-                            )}
-                                <CardContent className="p-6 flex flex-col flex-grow">
-                                    <Badge variant="secondary" className="w-fit mb-2">{recipe.category}</Badge>
-                                    <CardTitle className="font-headline text-2xl text-primary mb-2">{recipe.name}</CardTitle>
-                                    <CardDescription className="font-body text-foreground/80 flex-grow line-clamp-3">{recipe.description}</CardDescription>
-                                    <div className="flex items-center text-sm text-muted-foreground mt-4">
-                                        <ChefHat className="w-4 h-4 mr-2" />
-                                        <span>Resep oleh {initialStaticData.mainPage.name}</span>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    )})}
-                     {filteredRecipes.length === 0 && (
-                        <div className="md:col-span-2 lg:col-span-3 text-center py-16">
-                            <p className="text-lg text-muted-foreground">Tidak ada resep yang cocok dengan filter "{filter}".</p>
-                            <Button variant="link" onClick={() => setFilter('Semua')}>Tampilkan semua resep</Button>
-                        </div>
-                    )}
-                </div>
-            </div>
+            <RecipeFilter.Content allRecipes={allRecipes} allImages={allImages} authorName={mainPageData.name} />
         </main>
     );
 }
+
+const RecipeCard = ({ recipe, image, authorName }: { recipe: CoffeeRecipe, image?: ImagePlaceholder, authorName: string }) => (
+    <Link href={`/resep-kopi/${recipe.id}`} passHref>
+        <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg hover:shadow-primary/10 transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-full group hover:-translate-y-1">
+            {image && (
+                <CardHeader className="p-0 relative h-48">
+                    <Image
+                        src={image.imageUrl}
+                        alt={recipe.name}
+                        data-ai-hint={image.imageHint}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                </CardHeader>
+            )}
+            <CardContent className="p-6 flex flex-col flex-grow">
+                <Badge variant="secondary" className="w-fit mb-2">{recipe.category}</Badge>
+                <CardTitle className="font-headline text-2xl text-primary mb-2">{recipe.name}</CardTitle>
+                <CardDescription className="font-body text-foreground/80 flex-grow line-clamp-3">{recipe.description}</CardDescription>
+                <div className="flex items-center text-sm text-muted-foreground mt-4">
+                    <ChefHat className="w-4 h-4 mr-2" />
+                    <span>Resep oleh {authorName}</span>
+                </div>
+            </CardContent>
+        </Card>
+    </Link>
+);
+
+RecipeFilter.Content = function RecipeContent({ allRecipes, allImages, authorName }: { allRecipes: CoffeeRecipe[], allImages: ImagePlaceholder[], authorName: string }) {
+    const { filter } = RecipeFilter.useFilter();
+
+    const filteredRecipes = filter === 'Semua'
+        ? allRecipes
+        : allRecipes.filter(recipe => recipe.category.includes(filter));
+
+    return (
+        <div className="p-8 md:p-12 -mt-16">
+            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredRecipes.map((recipe) => {
+                    const recipeImage = allImages.find(p => p.id === recipe.imageId);
+                    return <RecipeCard key={recipe.id} recipe={recipe} image={recipeImage} authorName={authorName} />;
+                })}
+                {filteredRecipes.length === 0 && (
+                    <div className="md:col-span-2 lg:col-span-3 text-center py-16">
+                        <p className="text-lg text-muted-foreground">Tidak ada resep yang cocok dengan filter "{filter}".</p>
+                        <RecipeFilter.ClearButton />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};

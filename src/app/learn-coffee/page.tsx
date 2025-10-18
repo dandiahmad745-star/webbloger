@@ -1,46 +1,20 @@
 
-'use client';
-
-import { useState, useEffect } from 'react';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Globe, Star } from "lucide-react";
 import Link from "next/link";
-import { coffeeBeans as initialCoffeeBeans, type CoffeeBean } from "./coffee-data";
+import { staticData } from "../data-statis";
+import { type CoffeeBean } from "./coffee-data";
 import { Badge } from "@/components/ui/badge";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
+import { fetchServerData } from "@/lib/api";
 
-export default function LearnCoffeePage() {
-    const [beans, setBeans] = useState<CoffeeBean[]>(initialCoffeeBeans);
-    const [isClient, setIsClient] = useState(false);
-    const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
-
-    useEffect(() => {
-        setIsClient(true);
-        try {
-            const savedData = localStorage.getItem('coffeeBeansData');
-            const savedUserImages = localStorage.getItem('userImages');
-
-            const currentAllImages = [...PlaceHolderImages];
-            if (savedUserImages) {
-                currentAllImages.push(...JSON.parse(savedUserImages));
-            }
-            setAllImages(currentAllImages);
-
-            if (savedData) {
-                setBeans(JSON.parse(savedData));
-            }
-        } catch (error) {
-            console.error("Failed to parse from localStorage", error);
-        }
-    }, []);
-
+export default async function LearnCoffeePage() {
+    const beans = await fetchServerData('coffeeBeansData', staticData.resepKopi);
+    const userImages = await fetchServerData('userImages', []);
+    const allImages = [...PlaceHolderImages, ...userImages];
     const coffeeJourneyImage: ImagePlaceholder | undefined = allImages.find(p => p.id === 'coffee-journey-alt');
-
-    if (!isClient) {
-        return null; // Or a loading spinner
-    }
 
     return (
         <main className="min-h-screen w-full bg-background text-foreground fade-in">
@@ -74,7 +48,7 @@ export default function LearnCoffeePage() {
 
             <div className="p-8 md:p-12 -mt-16">
                 <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {beans.map((bean) => {
+                    {beans.map((bean: CoffeeBean) => {
                          const beanImage = allImages.find(p => p.id === bean.imageId);
                         return(
                         <Card key={bean.id} className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg hover:shadow-primary/10 transition-shadow duration-300 rounded-2xl overflow-hidden flex flex-col">

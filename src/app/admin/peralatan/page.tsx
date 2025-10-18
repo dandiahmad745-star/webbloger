@@ -2,114 +2,20 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
+import useSWR from 'swr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { staticData as initialStaticData, type Utensil } from "../../data-statis";
+import { type Utensil, type UtensilsData } from "../../data-statis";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Plus, Trash2, Upload, Download, UploadCloud, FileJson } from "lucide-react";
+import { Edit, Plus, Trash2, Download, UploadCloud, FileJson } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { ImagePicker } from "@/components/image-picker";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
-
-const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
-    const [currentSelection, setCurrentSelection] = useState(currentImageId);
-    const [userImages, setUserImages] = useState<ImagePlaceholder[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { toast } = useToast();
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const loadImages = () => {
-                try {
-                    const savedUserImages = localStorage.getItem('userImages');
-                    if (savedUserImages) {
-                        setUserImages(JSON.parse(savedUserImages));
-                    }
-                } catch (error) {
-                    console.error("Failed to parse user images from localStorage", error);
-                }
-            };
-            loadImages();
-            window.addEventListener('storage', loadImages);
-            return () => window.removeEventListener('storage', loadImages);
-        }
-    }, []);
-    
-    useEffect(() => {
-        setCurrentSelection(currentImageId);
-    }, [currentImageId]);
-
-    const handleSelect = (id: string) => {
-        setCurrentSelection(id);
-        onSelect(id);
-    }
-
-    const handleUploadClick = () => fileInputRef.current?.click();
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            if (file.size > 500 * 1024) { // 500KB limit
-                toast({
-                    variant: "destructive",
-                    title: "Ukuran file terlalu besar",
-                    description: "Ukuran gambar tidak boleh melebihi 500KB untuk menghemat ruang penyimpanan browser.",
-                });
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const dataUrl = e.target?.result as string;
-                const newImageId = `user-img-${Date.now()}`;
-                const newImage: ImagePlaceholder = { id: newImageId, imageUrl: dataUrl, description: file.name, imageHint: 'custom upload' };
-                
-                try {
-                    const existingImagesRaw = localStorage.getItem('userImages');
-                    const existingImages = existingImagesRaw ? JSON.parse(existingImagesRaw) : [];
-                    const updatedUserImages = [...existingImages, newImage];
-
-                    setUserImages(updatedUserImages);
-                    localStorage.setItem('userImages', JSON.stringify(updatedUserImages));
-                    handleSelect(newImageId);
-                    
-                    toast({ title: "Gambar Diunggah", description: "Gambar telah disimpan secara lokal." });
-
-                    window.dispatchEvent(new Event('storage'));
-                } catch (error) {
-                     toast({
-                        variant: "destructive",
-                        title: "Penyimpanan Penuh",
-                        description: "Gagal menyimpan gambar. Penyimpanan lokal browser mungkin penuh. Coba gunakan gambar yang lebih kecil.",
-                    });
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
-    const allImages = [...PlaceHolderImages, ...userImages];
-
-    return (
-        <div className="space-y-2">
-            <Label>Pilih Gambar Latar</Label>
-            <div className="grid grid-cols-4 md:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
-                {allImages.map(img => (
-                    <div key={img.id} className={cn("relative aspect-square rounded-md overflow-hidden cursor-pointer border-2", currentSelection === img.id ? 'border-primary' : 'border-transparent')} onClick={() => handleSelect(img.id)}>
-                        <Image src={img.imageUrl} alt={img.description} fill className="object-cover" />
-                    </div>
-                ))}
-            </div>
-             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-             <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}><Upload className="h-4 w-4 mr-2" />Unggah Foto (Maks 500KB)</Button>
-        </div>
-    )
-}
+import { fetcher, postData } from '@/lib/api';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const UtensilForm = ({ item, onSubmit, closeBtnId }: { item?: Utensil, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => (
      <form onSubmit={onSubmit} className="space-y-4">
@@ -128,34 +34,22 @@ const UtensilForm = ({ item, onSubmit, closeBtnId }: { item?: Utensil, onSubmit:
 
 export default function AdminPeralatanPage() {
     const { toast } = useToast();
-    const [utensilsData, setUtensilsData] = useState(initialStaticData.utensils);
-    const [isClient, setIsClient] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(utensilsData.imageId);
+    const { data: utensilsData, error, mutate, isLoading } = useSWR<UtensilsData>('/api/data?key=utensilsData', fetcher);
+    
+    const [selectedImage, setSelectedImage] = useState('');
     const importFileInputRef = useRef<HTMLInputElement>(null);
     const [jsonInput, setJsonInput] = useState('');
     const [isPasteImportOpen, setIsPasteImportOpen] = useState(false);
 
     useEffect(() => {
-        setIsClient(true);
-        try {
-            const savedUtensils = localStorage.getItem('utensilsData');
-            if (savedUtensils) {
-                const parsedData = JSON.parse(savedUtensils);
-                setUtensilsData(parsedData);
-                setSelectedImage(parsedData.imageId);
-            }
-        } catch (error) {
-            console.error("Failed to parse from localStorage", error);
+        if(utensilsData) {
+            setSelectedImage(utensilsData.imageId);
         }
-    }, []);
+    }, [utensilsData]);
 
-    const saveData = (data: typeof utensilsData) => {
-        setUtensilsData(data);
-        localStorage.setItem('utensilsData', JSON.stringify(data));
-    }
-
-    const handleSaveUtensilsInfo = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSaveUtensilsInfo = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if(!utensilsData) return;
         const formData = new FormData(e.currentTarget);
         const updatedData = {
             ...utensilsData,
@@ -163,12 +57,19 @@ export default function AdminPeralatanPage() {
             description: formData.get('description') as string,
             imageId: selectedImage,
         };
-        saveData(updatedData);
-        toast({ title: "Sukses!", description: "Informasi umum 'Coffee Utensils' telah diperbarui." });
+
+        try {
+            await postData('utensilsData', updatedData);
+            mutate(updatedData, false);
+            toast({ title: "Sukses!", description: "Informasi umum 'Coffee Utensils' telah diperbarui." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Gagal Menyimpan", description: "Tidak dapat menyimpan data ke server." });
+        }
     };
 
-    const handleSaveUtensilItem = (e: React.FormEvent<HTMLFormElement>, itemName?: string) => {
+    const handleSaveUtensilItem = async (e: React.FormEvent<HTMLFormElement>, itemName?: string) => {
         e.preventDefault();
+        if(!utensilsData) return;
         const formData = new FormData(e.currentTarget);
         const newItemData: Utensil = {
             name: formData.get('name') as string,
@@ -178,11 +79,8 @@ export default function AdminPeralatanPage() {
 
         let updatedItems;
         if (itemName) {
-            // Editing existing item
             updatedItems = utensilsData.items.map(item => item.name === itemName ? newItemData : item);
         } else {
-            // Adding new item
-            // Check for duplicates before adding
             if (utensilsData.items.some(item => item.name.toLowerCase() === newItemData.name.toLowerCase())) {
                 toast({ variant: "destructive", title: "Gagal", description: `Peralatan dengan nama "${newItemData.name}" sudah ada.` });
                 return;
@@ -191,24 +89,35 @@ export default function AdminPeralatanPage() {
         }
 
         const updatedData = { ...utensilsData, items: updatedItems };
-        saveData(updatedData);
-        toast({ title: "Sukses!", description: `Peralatan ${newItemData.name} telah disimpan.` });
+        
+        try {
+            await postData('utensilsData', updatedData);
+            mutate(updatedData, false);
+            toast({ title: "Sukses!", description: `Peralatan ${newItemData.name} telah disimpan.` });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Gagal Menyimpan", description: "Tidak dapat menyimpan data ke server." });
+        }
         
         const closeBtnId = itemName ? `close-utensil-${itemName.replace(/\s+/g, '-')}-dialog` : 'close-utensil-new-dialog';
-        const closeBtn = document.getElementById(closeBtnId);
-        if(closeBtn) closeBtn.click();
+        document.getElementById(closeBtnId)?.click();
     };
 
-    const handleDeleteUtensilItem = (itemName: string) => {
+    const handleDeleteUtensilItem = async (itemName: string) => {
+        if(!utensilsData) return;
         const updatedItems = utensilsData.items.filter(item => item.name !== itemName);
         const updatedData = { ...utensilsData, items: updatedItems };
 
-        saveData(updatedData);
-        toast({ title: "Dihapus!", description: `Peralatan ${itemName} telah dihapus.` });
+        try {
+            await postData('utensilsData', updatedData);
+            mutate(updatedData, false);
+            toast({ title: "Dihapus!", description: `Peralatan ${itemName} telah dihapus.` });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Gagal Menghapus", description: "Tidak dapat menghapus data dari server." });
+        }
     };
 
     const handleExport = () => {
-        // We export only the items array
+        if(!utensilsData) return;
         const dataStr = JSON.stringify(utensilsData.items, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
         const exportFileDefaultName = 'peralatan.json';
@@ -223,7 +132,8 @@ export default function AdminPeralatanPage() {
         importFileInputRef.current?.click();
     };
 
-    const processImportedData = (importedItems: any[]) => {
+    const processImportedData = async (importedItems: any[]) => {
+        if (!utensilsData) return false;
         if (Array.isArray(importedItems) && importedItems.every(item => 'name' in item && 'description' in item && 'icon' in item)) {
             const currentItems = [...utensilsData.items];
             let newItemsCount = 0;
@@ -238,15 +148,20 @@ export default function AdminPeralatanPage() {
                     skippedCount++;
                 }
             });
-
-            saveData({ ...utensilsData, items: currentItems });
-
-            if (newItemsCount > 0) {
-                toast({ title: "Impor Berhasil", description: `${newItemsCount} item peralatan baru ditambahkan. ${skippedCount} duplikat dilewati.` });
-            } else {
-                toast({ title: "Tidak Ada Item Baru", description: "Semua peralatan dalam file sudah ada di koleksi Anda." });
+            const updatedData = { ...utensilsData, items: currentItems };
+            try {
+                await postData('utensilsData', updatedData);
+                mutate(updatedData, false);
+                if (newItemsCount > 0) {
+                    toast({ title: "Impor Berhasil", description: `${newItemsCount} item peralatan baru ditambahkan. ${skippedCount} duplikat dilewati.` });
+                } else {
+                    toast({ title: "Tidak Ada Item Baru", description: "Semua peralatan dalam file sudah ada di koleksi Anda." });
+                }
+                return true;
+            } catch (e) {
+                toast({ variant: "destructive", title: "Gagal Menyimpan", description: "Gagal menyimpan data impor ke server." });
+                return false;
             }
-            return true;
         } else {
             throw new Error("Invalid JSON format.");
         }
@@ -256,11 +171,11 @@ export default function AdminPeralatanPage() {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const text = e.target?.result as string;
                     const importedData = JSON.parse(text);
-                    processImportedData(importedData);
+                    await processImportedData(importedData);
                 } catch (error) {
                     toast({ variant: "destructive", title: "Impor Gagal", description: "File JSON tidak valid atau formatnya salah." });
                 }
@@ -270,14 +185,14 @@ export default function AdminPeralatanPage() {
         if (event.target) event.target.value = '';
     };
 
-    const handleImportFromJsonText = () => {
+    const handleImportFromJsonText = async () => {
         if (!jsonInput.trim()) {
             toast({ variant: "destructive", title: "Input Kosong", description: "Silakan tempel konten JSON." });
             return;
         }
         try {
             const importedData = JSON.parse(jsonInput);
-            if (processImportedData(importedData)) {
+            if (await processImportedData(importedData)) {
                 setJsonInput('');
                 setIsPasteImportOpen(false);
             }
@@ -286,9 +201,7 @@ export default function AdminPeralatanPage() {
         }
     };
 
-    if (!isClient) {
-        return null;
-    }
+    if (error) return <div className="text-red-500">Gagal memuat data. Silakan coba lagi.</div>;
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -298,14 +211,17 @@ export default function AdminPeralatanPage() {
                     <CardDescription>Ubah judul, deskripsi, dan gambar latar untuk halaman peralatan.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleSaveUtensilsInfo} className="space-y-4">
-                        <div className="space-y-2"><Label htmlFor="utensils-title">Judul Halaman</Label><Input id="utensils-title" name="title" defaultValue={utensilsData.title} /></div>
-                        <div className="space-y-2"><Label htmlFor="utensils-description">Deskripsi Halaman</Label><Input id="utensils-description" name="description" defaultValue={utensilsData.description} /></div>
-                        <ImagePicker currentImageId={selectedImage} onSelect={setSelectedImage} />
-                        <div className="flex justify-end pt-2">
-                            <Button type="submit">Simpan Info Umum</Button>
-                        </div>
-                    </form>
+                    {isLoading && <Skeleton className="h-64 w-full" />}
+                    {utensilsData && (
+                        <form onSubmit={handleSaveUtensilsInfo} className="space-y-4">
+                            <div className="space-y-2"><Label htmlFor="utensils-title">Judul Halaman</Label><Input id="utensils-title" name="title" defaultValue={utensilsData.title} /></div>
+                            <div className="space-y-2"><Label htmlFor="utensils-description">Deskripsi Halaman</Label><Input id="utensils-description" name="description" defaultValue={utensilsData.description} /></div>
+                            <ImagePicker currentImageId={selectedImage} onSelect={setSelectedImage} />
+                            <div className="flex justify-end pt-2">
+                                <Button type="submit">Simpan Info Umum</Button>
+                            </div>
+                        </form>
+                    )}
                 </CardContent>
             </Card>
 
@@ -316,7 +232,13 @@ export default function AdminPeralatanPage() {
                         <CardDescription>Tambah, edit, atau hapus item individual.</CardDescription>
                     </div>
                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
+                        <Dialog>
+                            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah</Button></DialogTrigger>
+                            <DialogContent className="max-w-lg">
+                                <DialogHeader><DialogTitle>Tambah Peralatan Baru</DialogTitle></DialogHeader>
+                                <UtensilForm onSubmit={(e) => handleSaveUtensilItem(e)} closeBtnId="close-utensil-new-dialog" />
+                            </DialogContent>
+                        </Dialog>
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="icon"><UploadCloud className="h-4 w-4" /></Button>
@@ -331,23 +253,18 @@ export default function AdminPeralatanPage() {
                                     Impor dari Teks...
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator/>
-                                <DropdownMenuItem onSelect={handleExport}>
+                                <DropdownMenuItem onSelect={handleExport} disabled={!utensilsData}>
                                     <Download className="mr-2 h-4 w-4" />
                                     Ekspor ke JSON
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Dialog>
-                            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah</Button></DialogTrigger>
-                            <DialogContent className="max-w-lg">
-                                <DialogHeader><DialogTitle>Tambah Peralatan Baru</DialogTitle></DialogHeader>
-                                <UtensilForm onSubmit={(e) => handleSaveUtensilItem(e)} closeBtnId="close-utensil-new-dialog" />
-                            </DialogContent>
-                        </Dialog>
+                        <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {utensilsData.items.map(item => (
+                    {isLoading && Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+                    {utensilsData && utensilsData.items.map(item => (
                          <div key={item.name} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                             <p className="font-medium">{item.name}</p>
                             <div className="flex items-center gap-2">
