@@ -6,12 +6,12 @@ import Image from "next/image";
 import { Coffee, BookOpen, Utensils, Mail, MessageCircle, Lock, Music } from "lucide-react";
 
 import { LoadingScreen } from "@/components/loading-screen";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import Link from "next/link";
 import { staticData as initialStaticData } from "./data-statis";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -21,7 +21,8 @@ export default function Home() {
 
   useEffect(() => {
     setIsClient(true);
-    try {
+    const loadData = () => {
+       try {
         const savedUserImages = localStorage.getItem('userImages');
         const savedSettings = localStorage.getItem('mainPageData');
 
@@ -36,10 +37,23 @@ export default function Home() {
 
         const pic = allImages.find(p => p.id === 'profile-picture');
         setProfilePic(pic);
-    } catch (e) {
-        console.error("Failed to load from local storage", e);
-        setProfilePic(PlaceHolderImages.find(p => p.id === 'profile-picture'));
+      } catch (e) {
+          console.error("Failed to load from local storage", e);
+          setProfilePic(PlaceHolderImages.find(p => p.id === 'profile-picture'));
+      }
     }
+    
+    loadData();
+    
+    const handleStorageChange = () => {
+        loadData();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const socialLinks = [
@@ -84,25 +98,25 @@ export default function Home() {
               {pageData.bio}
             </p>
             <Separator className="my-6 bg-primary/10" />
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-4">
               {socialLinks.map((link) => {
                 const Icon = link.icon;
                 const isExternal = link.url.startsWith('mailto:');
-                // Corrected the name for 'learn coffee utensils'
-                const displayName = link.name === 'learn coffee utensils' ? 'Peralatan Kopi' : link.name;
+                const displayName = link.name;
 
-                const buttonComponent = (
-                  <Button
-                    variant="default"
-                    className="w-full justify-start h-auto p-4 text-left bg-primary/90 hover:bg-primary text-primary-foreground transition-all duration-300 ease-in-out transform hover:scale-[1.02] shadow-md hover:shadow-lg hover:shadow-accent/20"
-                    aria-label={isExternal ? `Visit my ${displayName}` : `Go to ${displayName}`}
-                  >
-                    <Icon className="mr-4 h-7 w-7 text-accent" />
-                    <div className="flex flex-col">
-                        <span className="font-bold text-base">{displayName}</span>
-                        <span className="text-sm font-normal text-primary-foreground/80">{link.description}</span>
+                const LinkContent = () => (
+                    <div 
+                        className={cn(
+                            "group flex w-full items-center p-4 rounded-lg transition-all duration-300",
+                            "bg-primary/5 hover:bg-primary/10 border border-primary/10"
+                        )}
+                    >
+                        <Icon className="mr-4 h-8 w-8 text-accent/80 transition-colors group-hover:text-accent" />
+                        <div className="flex flex-col overflow-hidden">
+                            <span className="font-bold text-base text-primary truncate">{displayName}</span>
+                            <span className="text-sm font-normal text-foreground/70 truncate">{link.description}</span>
+                        </div>
                     </div>
-                  </Button>
                 );
 
                 if (isExternal) {
@@ -114,14 +128,14 @@ export default function Home() {
                       rel="noopener noreferrer"
                       className="w-full"
                     >
-                      {buttonComponent}
+                      <LinkContent />
                     </a>
                   );
                 }
 
                 return (
-                  <Link key={link.name} href={link.url} passHref legacyBehavior={false} className="w-full">
-                    {buttonComponent}
+                  <Link key={link.name} href={link.url} passHref className="w-full">
+                     <LinkContent />
                   </Link>
                 );
               })}
