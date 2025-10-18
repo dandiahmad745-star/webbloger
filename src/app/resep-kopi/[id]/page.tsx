@@ -9,17 +9,20 @@ import { ArrowLeft, Coffee, Feather, Globe, Wind } from "lucide-react";
 import Link from "next/link";
 import { staticData as initialStaticData, type CoffeeRecipe } from "../../data-statis";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
-export default function RecipeDetailPage({ params }: { params: { id: string } }) {
+export default function RecipeDetailPage() {
+    const params = useParams();
     const [recipe, setRecipe] = useState<CoffeeRecipe | null>(null);
     const [isClient, setIsClient] = useState(false);
     const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
 
     useEffect(() => {
         setIsClient(true);
+        const recipeId = params.id;
+        
         try {
             const savedRecipes = localStorage.getItem('resepKopiData');
             const savedUserImages = localStorage.getItem('userImages');
@@ -31,12 +34,12 @@ export default function RecipeDetailPage({ params }: { params: { id: string } })
             setAllImages(currentAllImages);
 
             const allRecipes = savedRecipes ? JSON.parse(savedRecipes) : initialStaticData.resepKopi;
-            const currentRecipe = allRecipes.find((r: CoffeeRecipe) => r.id === params.id);
+            const currentRecipe = allRecipes.find((r: CoffeeRecipe) => r.id === recipeId);
             setRecipe(currentRecipe || null);
 
         } catch (error) {
             console.error("Failed to parse from localStorage", error);
-            const currentRecipe = initialStaticData.resepKopi.find(r => r.id === params.id);
+            const currentRecipe = initialStaticData.resepKopi.find(r => r.id === recipeId);
             setRecipe(currentRecipe || null);
         }
     }, [params.id]);
