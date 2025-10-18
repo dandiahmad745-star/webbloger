@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { worldRegions, allCountries, type City } from "@/lib/world-regions";
 
-
 const RecipeForm = ({ recipe, onSubmit, closeBtnId, onSelectImage, onCountryChange, onCityChange, selectedCountry, selectedCity, availableCities }: { 
     recipe?: CoffeeRecipe, 
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, 
@@ -255,12 +254,23 @@ export default function AdminResepKopiPage() {
             reader.onload = (e) => {
                 try {
                     const text = e.target?.result as string;
-                    const importedData = JSON.parse(text);
-                    // Simple validation
-                    if (Array.isArray(importedData) && importedData.every(item => 'id' in item && 'name' in item)) {
-                        setRecipesData(importedData);
-                        localStorage.setItem('resepKopiData', JSON.stringify(importedData));
-                        toast({ title: "Impor Berhasil", description: "Data resep telah diperbarui." });
+                    const importedRecipes = JSON.parse(text);
+
+                    if (Array.isArray(importedRecipes) && importedRecipes.every(item => 'id' in item && 'name' in item)) {
+                        // Combine existing recipes with imported ones
+                        const updatedRecipes = [...recipesData];
+                        
+                        importedRecipes.forEach((newRecipe: CoffeeRecipe) => {
+                            // Check for duplicates by name or id to avoid adding the same recipe twice
+                            const isDuplicate = updatedRecipes.some(existingRecipe => existingRecipe.id === newRecipe.id || existingRecipe.name === newRecipe.name);
+                            if (!isDuplicate) {
+                                updatedRecipes.push(newRecipe);
+                            }
+                        });
+
+                        setRecipesData(updatedRecipes);
+                        localStorage.setItem('resepKopiData', JSON.stringify(updatedRecipes));
+                        toast({ title: "Impor Berhasil", description: "Resep baru telah ditambahkan." });
                     } else {
                         throw new Error("Invalid JSON format.");
                     }
@@ -270,9 +280,11 @@ export default function AdminResepKopiPage() {
             };
             reader.readAsText(file);
         }
-        // Reset file input
-        if(event.target) event.target.value = '';
+        if (event.target) {
+            event.target.value = '';
+        }
     };
+
 
     if (!isClient) {
         return null;
@@ -368,5 +380,3 @@ export default function AdminResepKopiPage() {
         </Card>
     );
 }
-
-    
