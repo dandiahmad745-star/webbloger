@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -11,11 +10,12 @@ import { staticData as initialStaticData } from '../data-statis';
 import { generateRecipe } from '@/ai/flows/generate-recipe-flow';
 import { useToast } from '@/hooks/use-toast';
 import { type CoffeeRecipe } from '../data-statis';
+import { type GenerateRecipeOutput } from '@/ai/flows/recipe-schema';
 
 type Message = {
     from: 'user' | 'bot';
     text?: string;
-    recipe?: CoffeeRecipe;
+    recipe?: GenerateRecipeOutput;
     isLoading?: boolean;
 };
 
@@ -47,7 +47,7 @@ export default function NgobrolPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
     
-    const handleCopyToClipboard = (recipe: CoffeeRecipe) => {
+    const handleCopyToClipboard = (recipe: GenerateRecipeOutput) => {
         const recipeString = JSON.stringify([recipe], null, 2);
         navigator.clipboard.writeText(recipeString).then(() => {
             setCopiedStates(prev => ({ ...prev, [recipe.id]: true }));
@@ -61,7 +61,7 @@ export default function NgobrolPage() {
         });
     };
 
-    const handleImportRecipe = (recipe: CoffeeRecipe) => {
+    const handleImportRecipe = (recipe: GenerateRecipeOutput) => {
         try {
             const savedRecipesRaw = localStorage.getItem('resepKopiData');
             const savedRecipes = savedRecipesRaw ? JSON.parse(savedRecipesRaw) : [];
@@ -119,7 +119,7 @@ export default function NgobrolPage() {
         return null;
     }
 
-    const RecipeCard = ({ recipe, isCopied }: { recipe: CoffeeRecipe, isCopied: boolean }) => (
+    const RecipeCard = ({ recipe, isCopied }: { recipe: GenerateRecipeOutput, isCopied: boolean }) => (
         <div className="border bg-card p-4 rounded-lg text-sm text-foreground w-full max-w-sm">
             <h4 className="font-bold text-primary font-headline">{recipe.name}</h4>
             <p className="text-muted-foreground italic mb-2">{recipe.description}</p>
