@@ -58,7 +58,7 @@ export default function RecipeDetailPage() {
     const infoItems = [
         { icon: Wind, label: "Rasa", value: recipe.taste },
         { icon: Feather, label: "Aroma", value: recipe.aroma },
-        { icon: Globe, label: "Asal", value: recipe.origin },
+        { icon: Globe, label: "Asal", value: recipe.category },
         { icon: Coffee, label: "Biji Kopi", value: recipe.beansUsed },
     ];
 
@@ -84,7 +84,7 @@ export default function RecipeDetailPage() {
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
                     <div className="max-w-4xl mx-auto">
-                        <Badge variant="secondary" className="mb-2 backdrop-blur-sm">{recipe.origin}</Badge>
+                        <Badge variant="secondary" className="mb-2 backdrop-blur-sm">{recipe.category}</Badge>
                         <h1 className="font-headline text-4xl md:text-6xl text-white">{recipe.name}</h1>
                         <p className="font-body text-base md:text-lg text-white/80 mt-2 max-w-2xl">
                             {recipe.description}

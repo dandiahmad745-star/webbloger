@@ -14,12 +14,15 @@ import { Edit, Plus, Trash2, Upload } from "lucide-react";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { aseanRegions } from "@/lib/asean-regions";
 
 export default function AdminResepKopiPage() {
     const { toast } = useToast();
     const [recipesData, setRecipesData] = useState<CoffeeRecipe[]>(initialStaticData.resepKopi);
     const [isClient, setIsClient] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('');
 
     useEffect(() => {
         setIsClient(true);
@@ -41,7 +44,7 @@ export default function AdminResepKopiPage() {
             description: formData.get('description') as string,
             taste: formData.get('taste') as string,
             aroma: formData.get('aroma') as string,
-            origin: formData.get('origin') as string,
+            category: selectedCategory || (recipeId ? recipesData.find(r => r.id === recipeId)?.category || '' : ''),
             beansUsed: formData.get('beansUsed') as string,
             instructions: (formData.get('instructions') as string).split('\n'),
             imageId: selectedImage || (recipeId ? recipesData.find(r => r.id === recipeId)?.imageId || '' : ''),
@@ -61,6 +64,7 @@ export default function AdminResepKopiPage() {
         const closeBtnId = recipeId ? `close-recipe-${recipeId}-dialog` : 'close-recipe-new-dialog';
         document.getElementById(closeBtnId)?.click();
         setSelectedImage('');
+        setSelectedCategory('');
     };
 
     const handleDeleteRecipe = (recipeId: string) => {
@@ -80,20 +84,21 @@ export default function AdminResepKopiPage() {
         const fileInputRef = useRef<HTMLInputElement>(null);
 
         useEffect(() => {
-            if (typeof window === 'undefined') return;
-            const loadImages = () => {
-                try {
-                    const savedUserImages = localStorage.getItem('userImages');
-                    if (savedUserImages) {
-                        setUserImages(JSON.parse(savedUserImages));
+            if (typeof window !== 'undefined') {
+                const loadImages = () => {
+                    try {
+                        const savedUserImages = localStorage.getItem('userImages');
+                        if (savedUserImages) {
+                            setUserImages(JSON.parse(savedUserImages));
+                        }
+                    } catch (error) {
+                        console.error("Failed to parse user images from localStorage", error);
                     }
-                } catch (error) {
-                    console.error("Failed to parse user images from localStorage", error);
-                }
-            };
-            loadImages();
-            window.addEventListener('storage', loadImages);
-            return () => window.removeEventListener('storage', loadImages);
+                };
+                loadImages();
+                window.addEventListener('storage', loadImages);
+                return () => window.removeEventListener('storage', loadImages);
+            }
         }, []);
 
         const handleSelect = (id: string) => {
@@ -146,16 +151,52 @@ export default function AdminResepKopiPage() {
         )
     }
 
-    const RecipeForm = ({ recipe, onSubmit, closeBtnId }: { recipe?: CoffeeRecipe, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => (
+    const RecipeForm = ({ recipe, onSubmit, closeBtnId }: { recipe?: CoffeeRecipe, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => {
+        useEffect(() => {
+            if (recipe?.category) {
+                setSelectedCategory(recipe.category);
+            } else {
+                setSelectedCategory('');
+            }
+        }, [recipe]);
+
+        return (
         <form onSubmit={onSubmit} className="space-y-3 max-h-[70vh] overflow-y-auto p-1 pr-4">
             <div className="space-y-1"><Label htmlFor="name">Nama Resep</Label><Input id="name" name="name" defaultValue={recipe?.name} required /></div>
             <div className="space-y-1"><Label htmlFor="description">Deskripsi Singkat</Label><Textarea id="description" name="description" defaultValue={recipe?.description} required rows={2} /></div>
+            
+            <div className="space-y-1">
+                <Label htmlFor="category">Asal / Kategori</Label>
+                <Select name="category" onValueChange={setSelectedCategory} defaultValue={recipe?.category}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Pilih negara atau kota..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Lainnya</SelectLabel>
+                            <SelectItem value="Italia">Italia</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                            <SelectLabel>Negara ASEAN</SelectLabel>
+                            {aseanRegions.filter(r => !r.isCity).map(region => (
+                                <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
+                            ))}
+                        </SelectGroup>
+                        <SelectGroup>
+                            <SelectLabel>Kota di ASEAN</SelectLabel>
+                             {aseanRegions.filter(r => r.isCity).map(region => (
+                                <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
+                            ))}
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1"><Label htmlFor="taste">Rasa</Label><Input id="taste" name="taste" defaultValue={recipe?.taste} required /></div>
                 <div className="space-y-1"><Label htmlFor="aroma">Aroma</Label><Input id="aroma" name="aroma" defaultValue={recipe?.aroma} required /></div>
-                <div className="space-y-1"><Label htmlFor="origin">Asal</Label><Input id="origin" name="origin" defaultValue={recipe?.origin} required /></div>
-                <div className="space-y-1"><Label htmlFor="beansUsed">Biji Kopi</Label><Input id="beansUsed" name="beansUsed" defaultValue={recipe?.beansUsed} required /></div>
             </div>
+            <div className="space-y-1"><Label htmlFor="beansUsed">Biji Kopi</Label><Input id="beansUsed" name="beansUsed" defaultValue={recipe?.beansUsed} required /></div>
             <div className="space-y-1"><Label htmlFor="instructions">Langkah-langkah (pisahkan dengan baris baru)</Label><Textarea id="instructions" name="instructions" defaultValue={recipe?.instructions.join('\n')} required rows={5} /></div>
             <ImagePicker currentImageId={recipe?.imageId} onSelect={setSelectedImage} />
             <DialogFooter className="pt-4 sticky bottom-0 bg-background/95 pb-1">
@@ -163,7 +204,7 @@ export default function AdminResepKopiPage() {
                 <DialogTrigger asChild><Button type="button" variant="ghost" id={closeBtnId}>Batal</Button></DialogTrigger>
             </DialogFooter>
         </form>
-    );
+    )};
 
     return (
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg w-full">
@@ -172,7 +213,7 @@ export default function AdminResepKopiPage() {
                     <CardTitle>Kelola Resep Kopi</CardTitle>
                     <CardDescription>Tambah, edit, atau hapus resep untuk halaman "Resep Kopi".</CardDescription>
                 </div>
-                <Dialog onOpenChange={() => setSelectedImage('')}>
+                <Dialog onOpenChange={(open) => { if(!open) { setSelectedImage(''); setSelectedCategory(''); } }}>
                     <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Resep</Button></DialogTrigger>
                     <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Tambah Resep Baru</DialogTitle></DialogHeader><RecipeForm onSubmit={(e) => handleSaveRecipe(e)} closeBtnId="close-recipe-new-dialog" /></DialogContent>
                 </Dialog>
@@ -182,7 +223,7 @@ export default function AdminResepKopiPage() {
                     <div key={recipe.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                         <p className="font-medium">{recipe.name}</p>
                         <div className="flex items-center gap-2">
-                            <Dialog onOpenChange={() => setSelectedImage(recipe.imageId)}>
+                            <Dialog onOpenChange={(open) => { if(open) { setSelectedImage(recipe.imageId); setSelectedCategory(recipe.category); } else { setSelectedImage(''); setSelectedCategory(''); } }}>
                                 <DialogTrigger asChild><Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button></DialogTrigger>
                                 <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Edit {recipe.name}</DialogTitle></DialogHeader><RecipeForm recipe={recipe} onSubmit={(e) => handleSaveRecipe(e, recipe.id)} closeBtnId={`close-recipe-${recipe.id}-dialog`} /></DialogContent>
                             </Dialog>

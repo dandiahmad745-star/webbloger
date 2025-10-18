@@ -11,7 +11,7 @@ export type CoffeeRecipe = {
     description: string;
     taste: string;
     aroma: string;
-    origin: string;
+    category: string;
     beansUsed: string;
     instructions: string[];
     imageId: string;
@@ -67,7 +67,7 @@ export const staticData = {
             description: 'Dasar dari semua minuman kopi, espresso yang kaya dan pekat.',
             taste: 'Pahit, manis, dengan sedikit asam',
             aroma: 'Karamel, cokelat, dan bunga',
-            origin: 'Italia',
+            category: 'Italia',
             beansUsed: 'Biji Arabica Gayo',
             instructions: [
                 'Giling 18-20 gram biji kopi dengan kehalusan seperti gula pasir.',
