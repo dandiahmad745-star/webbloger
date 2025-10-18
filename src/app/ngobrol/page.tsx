@@ -1,34 +1,52 @@
 
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Send } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { staticData as initialStaticData } from "../data-statis";
 
 export default function NgobrolPage() {
-    const [messages, setMessages] = useState([
-        { from: "bot", text: "Halo! Ada yang bisa saya bantu seputar kopi hari ini?" }
-    ]);
+    const [welcomeMessage, setWelcomeMessage] = useState(initialStaticData.mainPage.chatWelcome);
+    const [messages, setMessages] = useState<{ from: string; text: string; }[]>([]);
     const [input, setInput] = useState("");
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+        try {
+            const savedSettings = localStorage.getItem('mainPageData');
+            if (savedSettings) {
+                const parsedSettings = JSON.parse(savedSettings);
+                setWelcomeMessage(parsedSettings.chatWelcome);
+                setMessages([{ from: "bot", text: parsedSettings.chatWelcome }]);
+            } else {
+                 setMessages([{ from: "bot", text: welcomeMessage }]);
+            }
+        } catch (error) {
+            console.error("Failed to parse from localStorage", error);
+            setMessages([{ from: "bot", text: welcomeMessage }]);
+        }
+    }, [welcomeMessage]);
 
     const handleSend = () => {
         if (input.trim() === "") return;
         
-        // Add user message
         const newMessages = [...messages, { from: "user", text: input }];
-        
-        // Simple bot response
-        setTimeout(() => {
-            setMessages([...newMessages, {from: "bot", text: "Terima kasih atas pertanyaan Anda. Tim kami akan segera merespons."}]);
-        }, 1000);
-
-        setInput("");
         setMessages(newMessages);
+        setInput("");
+
+        setTimeout(() => {
+            setMessages(prev => [...prev, {from: "bot", text: "Terima kasih atas pertanyaan Anda. Tim kami akan segera merespons."}]);
+        }, 1000);
     };
+
+    if (!isClient) {
+        return null; // or a loading spinner
+    }
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 fade-in bg-background">

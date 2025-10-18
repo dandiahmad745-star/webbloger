@@ -15,13 +15,14 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Coffee, Settings, BookUser, Wrench, Home, PanelLeft } from 'lucide-react';
+import { Coffee, Settings, BookUser, Wrench, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const menuItems = [
   { href: '/admin', label: 'Biji Kopi', icon: Coffee },
   { href: '/admin/kisah-saya', label: 'Kisah Saya', icon: BookUser },
   { href: '/admin/peralatan', label: 'Peralatan', icon: Wrench },
+  { href: '/admin/pengaturan', label: 'Pengaturan Umum', icon: Settings },
 ];
 
 export default function AdminLayout({

@@ -11,36 +11,42 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import Link from "next/link";
-
-const socialLinks = [
-  { name: "Learn Coffee", url: "/learn-coffee", icon: Coffee },
-  { name: "Kisah Saya", url: "/kisah-saya", icon: BookOpen },
-  { name: "learn coffee utensils", url: "/learn-coffee-utensils", icon: Utensils },
-  { name: "Hubungi Saya", url: "mailto:halo@kopi.com", icon: Mail },
-  { name: "Ngobrol", url: "/ngobrol", icon: MessageCircle },
-];
+import { staticData as initialStaticData } from "./data-statis";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [profilePic, setProfilePic] = useState<ImagePlaceholder | undefined>(PlaceHolderImages.find(p => p.id === 'profile-picture'));
+  const [pageData, setPageData] = useState(initialStaticData.mainPage);
 
   useEffect(() => {
     try {
         const savedUserImages = localStorage.getItem('userImages');
+        const savedSettings = localStorage.getItem('mainPageData');
+
         const allImages = [...PlaceHolderImages];
         if (savedUserImages) {
             allImages.push(...JSON.parse(savedUserImages));
         }
-        // Assuming there might be a profile pic saved in localStorage, though the admin panel doesn't support changing it yet.
-        // This is a placeholder for future functionality.
-        // For now, it just re-finds the default.
+        
+        if (savedSettings) {
+            setPageData(JSON.parse(savedSettings));
+        }
+
         const pic = allImages.find(p => p.id === 'profile-picture');
         setProfilePic(pic);
     } catch (e) {
-        console.error("Failed to load images from local storage", e);
+        console.error("Failed to load from local storage", e);
         setProfilePic(PlaceHolderImages.find(p => p.id === 'profile-picture'));
     }
   }, []);
+
+  const socialLinks = [
+    { name: "Learn Coffee", url: "/learn-coffee", icon: Coffee },
+    { name: "Kisah Saya", url: "/kisah-saya", icon: BookOpen },
+    { name: "learn coffee utensils", url: "/learn-coffee-utensils", icon: Utensils },
+    { name: "Hubungi Saya", url: `mailto:${pageData.contactEmail}`, icon: Mail },
+    { name: "Ngobrol", url: "/ngobrol", icon: MessageCircle },
+  ];
 
   if (isLoading) {
     return <LoadingScreen onLoaded={() => setIsLoading(false)} />;
@@ -63,15 +69,15 @@ export default function Home() {
               />
             )}
             <CardTitle className="font-headline text-3xl md:text-4xl text-primary">
-              Arul Faathir
+              {pageData.name}
             </CardTitle>
             <CardDescription className="font-body text-base md:text-lg text-foreground/80 pt-2">
-              Secangkir Semangat, Sejuta Cerita
+              {pageData.tagline}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 md:p-8 pt-0">
             <p className="text-center font-body text-foreground/90 mb-6">
-              Menjelajahi dunia rasa dari biji kopi pilihan. Temukan cerita di setiap cangkir dan mari nikmati perjalanan aromatik ini bersama.
+              {pageData.bio}
             </p>
             <Separator className="my-6 bg-primary/10" />
             <div className="flex flex-col space-y-4">

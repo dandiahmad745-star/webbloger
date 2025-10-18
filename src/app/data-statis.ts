@@ -6,6 +6,13 @@ export type Utensil = {
 };
 
 export const staticData = {
+    mainPage: {
+        name: "Arul Faathir",
+        tagline: "Secangkir Semangat, Sejuta Cerita",
+        bio: "Menjelajahi dunia rasa dari biji kopi pilihan. Temukan cerita di setiap cangkir dan mari nikmati perjalanan aromatik ini bersama.",
+        contactEmail: "halo@kopi.com",
+        chatWelcome: "Halo! Ada yang bisa saya bantu seputar kopi hari ini?",
+    },
     kisahSaya: {
         title: "Kisah Saya",
         description: "Perjalanan Pribadi dalam Dunia Kopi",
@@ -27,5 +34,3 @@ export const staticData = {
         ] as Utensil[]
     }
 }
-
-    
