@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Coffee, BookOpen, Utensils, Mail, MessageCircle } from "lucide-react";
+import { Coffee, BookOpen, Utensils, Mail, MessageCircle, Lock, Music } from "lucide-react";
 
 import { LoadingScreen } from "@/components/loading-screen";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,8 @@ export default function Home() {
     { name: "Learn Coffee", url: "/learn-coffee", icon: Coffee },
     { name: "Kisah Saya", url: "/kisah-saya", icon: BookOpen },
     { name: "learn coffee utensils", url: "/learn-coffee-utensils", icon: Utensils },
+    { name: "Pesan Rahasia", url: "/pesan-rahasia", icon: Lock },
+    { name: "Playlist Saya", url: "/playlist-saya", icon: Music },
     { name: "Hubungi Saya", url: `mailto:${pageData.contactEmail}`, icon: Mail },
     { name: "Ngobrol", url: "/ngobrol", icon: MessageCircle },
   ];

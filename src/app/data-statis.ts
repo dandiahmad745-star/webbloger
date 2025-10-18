@@ -32,5 +32,16 @@ export const staticData = {
             { name: "Aeropress", description: "Alat serbaguna yang menghasilkan kopi kaya rasa dengan tingkat keasaman rendah.", icon: "Coffee" },
             { name: "French Press", description: "Metode rendam yang menghasilkan kopi dengan body penuh dan tekstur yang kaya.", icon: "Droplets" },
         ] as Utensil[]
+    },
+    pesanRahasia: {
+        title: "Pesan Rahasia",
+        message: "Ini adalah pesan rahasia. Hanya untuk mata Anda.",
+        imageId: "profile-picture",
+    },
+    playlistSaya: {
+        title: "Playlist Saya",
+        description: "Beberapa lagu yang menemani secangkir kopi.",
+        imageId: "coffee-journey",
+        songs: [] as { title: string; artist: string; audioUrl: string }[],
     }
 }
