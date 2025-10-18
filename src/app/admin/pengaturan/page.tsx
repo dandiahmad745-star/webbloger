@@ -20,7 +20,12 @@ export default function AdminPengaturanPage() {
         try {
             const savedSettings = localStorage.getItem('mainPageData');
             if (savedSettings) {
-                setSettingsData(JSON.parse(savedSettings));
+                // Ensure new secretMessage fields are added if they don't exist
+                const parsed = JSON.parse(savedSettings);
+                if (!parsed.secretMessage) {
+                    parsed.secretMessage = initialStaticData.mainPage.secretMessage;
+                }
+                setSettingsData(parsed);
             }
         } catch (error) {
             console.error("Failed to parse from localStorage", error);
@@ -36,6 +41,10 @@ export default function AdminPengaturanPage() {
             bio: formData.get('bio') as string,
             contactEmail: formData.get('contactEmail') as string,
             chatWelcome: formData.get('chatWelcome') as string,
+            secretMessage: {
+                title: formData.get('secretTitle') as string,
+                content: formData.get('secretContent') as string,
+            }
         };
         setSettingsData(updatedData);
         localStorage.setItem('mainPageData', JSON.stringify(updatedData));
@@ -77,6 +86,17 @@ export default function AdminPengaturanPage() {
                         <Label htmlFor="chatWelcome">Pesan Selamat Datang (untuk halaman "Ngobrol")</Label>
                         <Input id="chatWelcome" name="chatWelcome" defaultValue={settingsData.chatWelcome} />
                     </div>
+
+                    <h3 className="text-lg font-medium text-primary border-b pb-2 pt-4">Pesan Tersembunyi (Halaman Utama)</h3>
+                     <div className="space-y-2">
+                        <Label htmlFor="secretTitle">Judul Pesan Tersembunyi</Label>
+                        <Input id="secretTitle" name="secretTitle" defaultValue={settingsData.secretMessage.title} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="secretContent">Isi Pesan Tersembunyi</Label>
+                        <Textarea id="secretContent" name="secretContent" defaultValue={settingsData.secretMessage.content} rows={3} />
+                    </div>
+
 
                     <div className="flex justify-end pt-4">
                         <Button type="submit">Simpan Perubahan</Button>

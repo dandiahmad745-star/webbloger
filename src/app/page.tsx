@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Coffee, BookOpen, Utensils, Mail, MessageCircle, Lock, Music } from "lucide-react";
+import { Coffee, BookOpen, Utensils, Mail, MessageCircle, Lock, Music, Sparkles } from "lucide-react";
 
 import { LoadingScreen } from "@/components/loading-screen";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-imag
 import Link from "next/link";
 import { staticData as initialStaticData } from "./data-statis";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 
 const FloatingParticles = () => {
     const particles = Array.from({ length: 20 });
@@ -55,7 +57,11 @@ export default function Home() {
         }
         
         if (savedSettings) {
-            setPageData(JSON.parse(savedSettings));
+            const parsed = JSON.parse(savedSettings);
+             if (!parsed.secretMessage) { // Backwards compatibility
+                parsed.secretMessage = initialStaticData.mainPage.secretMessage;
+            }
+            setPageData(parsed);
         }
 
         const pic = allImages.find(p => p.id === 'profile-picture');
@@ -63,6 +69,7 @@ export default function Home() {
       } catch (e) {
           console.error("Failed to load from local storage", e);
           // Fallback to initial data if localStorage fails
+          setPageData(initialStaticData.mainPage);
           setProfilePic(PlaceHolderImages.find(p => p.id === 'profile-picture'));
       }
     }
@@ -171,8 +178,24 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
-          <footer className="text-center mt-8 text-sm text-muted-foreground">
+          <footer className="text-center mt-8 text-sm text-muted-foreground flex items-center justify-center gap-2">
             <p>&copy; {new Date().getFullYear()} BioLink Elegance. All Rights Reserved.</p>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-accent hover:bg-transparent">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="sr-only">Pesan Rahasia</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="font-headline text-primary text-2xl">{pageData.secretMessage.title}</DialogTitle>
+                  <DialogDescription className="font-body text-base pt-4">
+                    {pageData.secretMessage.content}
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
           </footer>
         </div>
       </main>

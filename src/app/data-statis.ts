@@ -12,6 +12,10 @@ export const staticData = {
         bio: "Menjelajahi dunia rasa dari biji kopi pilihan. Temukan cerita di setiap cangkir dan mari nikmati perjalanan aromatik ini bersama.",
         contactEmail: "halo@kopi.com",
         chatWelcome: "Halo! Ada yang bisa saya bantu seputar kopi hari ini?",
+        secretMessage: {
+            title: "Sebuah Pesan Untukmu",
+            content: "Terima kasih telah menemukan ini. Kamu adalah penjelajah sejati, sama seperti caramu menikmati setiap lapisan rasa dalam secangkir kopi. Teruslah mencari dan menemukan keajaiban di tempat-tempat tak terduga."
+        }
     },
     kisahSaya: {
         title: "Kisah Saya",
