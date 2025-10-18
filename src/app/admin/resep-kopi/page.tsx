@@ -15,7 +15,7 @@ import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-imag
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { aseanCountries, otherRegions, type Country, type City } from "@/lib/asean-regions";
+import { aseanCountries, otherRegions, type City } from "@/lib/asean-regions";
 
 export default function AdminResepKopiPage() {
     const { toast } = useToast();
@@ -23,7 +23,6 @@ export default function AdminResepKopiPage() {
     const [isClient, setIsClient] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
     
-    // State for chained dropdown
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
     const [availableCities, setAvailableCities] = useState<City[]>([]);
@@ -38,12 +37,10 @@ export default function AdminResepKopiPage() {
         }
     }, []);
 
-    // Effect for chained dropdown
     useEffect(() => {
         if (selectedCountry) {
             const countryData = aseanCountries.find(c => c.name === selectedCountry);
             setAvailableCities(countryData?.cities || []);
-            // Don't reset city if we are just loading data
         } else {
             setAvailableCities([]);
         }
@@ -202,10 +199,10 @@ export default function AdminResepKopiPage() {
                         </SelectContent>
                     </Select>
                     <Select onValueChange={setSelectedCity} value={selectedCity} disabled={availableCities.length === 0}>
-                        <SelectTrigger><SelectValue placeholder="Pilih kota..." /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder="Pilih kota/provinsi..." /></SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                <SelectLabel>Kota di {selectedCountry}</SelectLabel>
+                                <SelectLabel>Kota/Provinsi di {selectedCountry}</SelectLabel>
                                 {availableCities.map(city => (
                                     <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
                                 ))}
@@ -241,13 +238,19 @@ export default function AdminResepKopiPage() {
                     const countryName = parts.length > 1 ? parts[1] : parts[0];
                     const cityName = parts.length > 1 ? parts[0] : '';
                     
-                    setSelectedCountry(countryName);
+                    const allRegions = [...aseanCountries, ...otherRegions.map(r => ({name: r.name, cities: []}))];
+                    const countryData = allRegions.find(c => c.name === countryName);
                     
-                    const countryData = aseanCountries.find(c => c.name === countryName);
-                    if(countryData) {
-                        setAvailableCities(countryData.cities || []);
+                    setSelectedCountry(countryName);
+
+                    if (countryData && 'cities' in countryData && countryData.cities.length > 0) {
+                        setAvailableCities(countryData.cities);
+                        setSelectedCity(cityName);
+                    } else {
+                        setAvailableCities([]);
+                        setSelectedCity('');
                     }
-                    setSelectedCity(cityName);
+
                 } else {
                     resetCategorySelection();
                 }

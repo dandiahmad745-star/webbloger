@@ -77,6 +77,25 @@ export const staticData = {
                 'Sajikan segera dan nikmati crema emasnya.'
             ],
             imageId: 'espresso-shot'
-        }
+        },
+        {
+            id: 'gayo-wine-coffee',
+            name: 'Kopi Wine Gayo',
+            description: 'Proses fermentasi unik yang menghasilkan aroma dan rasa seperti anggur.',
+            taste: 'Kompleks, fruity, dengan sedikit rasa anggur',
+            aroma: 'Fruity, wangi, seperti anggur merah',
+            category: 'Gayo, Indonesia',
+            beansUsed: 'Biji Arabica Gayo (Proses Wine)',
+            instructions: [
+              'Siapkan 15 gram biji kopi Gayo Wine.',
+              'Giling medium-fine, sedikit lebih kasar dari espresso.',
+              'Gunakan metode V60 atau pour-over.',
+              'Panaskan air hingga 92°C.',
+              'Lakukan blooming selama 30 detik dengan 30 ml air.',
+              'Tuang sisa air secara perlahan dengan gerakan melingkar hingga total 225 ml.',
+              'Total waktu seduh sekitar 2-3 menit.'
+            ],
+            imageId: 'gayo-beans'
+          },
     ] as CoffeeRecipe[]
 }

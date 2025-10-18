@@ -18,10 +18,11 @@ export default function RecipeDetailPage() {
     const [recipe, setRecipe] = useState<CoffeeRecipe | null>(null);
     const [isClient, setIsClient] = useState(false);
     const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
+    const id = params.id as string;
 
     useEffect(() => {
         setIsClient(true);
-        const recipeId = params.id;
+        if(!id) return;
         
         try {
             const savedRecipes = localStorage.getItem('resepKopiData');
@@ -34,15 +35,15 @@ export default function RecipeDetailPage() {
             setAllImages(currentAllImages);
 
             const allRecipes = savedRecipes ? JSON.parse(savedRecipes) : initialStaticData.resepKopi;
-            const currentRecipe = allRecipes.find((r: CoffeeRecipe) => r.id === recipeId);
+            const currentRecipe = allRecipes.find((r: CoffeeRecipe) => r.id === id);
             setRecipe(currentRecipe || null);
 
         } catch (error) {
             console.error("Failed to parse from localStorage", error);
-            const currentRecipe = initialStaticData.resepKopi.find(r => r.id === recipeId);
+            const currentRecipe = initialStaticData.resepKopi.find(r => r.id === id);
             setRecipe(currentRecipe || null);
         }
-    }, [params.id]);
+    }, [id]);
 
     if (!isClient) {
         // You can return a loading skeleton here
