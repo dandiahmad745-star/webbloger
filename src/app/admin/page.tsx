@@ -150,6 +150,23 @@ export default function AdminCoffeeBeansPage() {
         )
     }
 
+    const CoffeeBeanForm = ({ bean, onSubmit, closeBtnId }: { bean?: CoffeeBean, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => (
+        <form onSubmit={onSubmit} className="space-y-4">
+            <div className="space-y-2"><Label htmlFor={`name-${bean?.id || 'new'}`}>Nama</Label><Input id={`name-${bean?.id || 'new'}`} name="name" defaultValue={bean?.name} required /></div>
+            <div className="space-y-2"><Label htmlFor={`origin-${bean?.id || 'new'}`}>Asal</Label><Input id={`origin-${bean?.id || 'new'}`} name="origin" defaultValue={bean?.origin} required /></div>
+            <div className="space-y-2"><Label htmlFor={`type-${bean?.id || 'new'}`}>Tipe</Label><Input id={`type-${bean?.id || 'new'}`} name="type" placeholder="Arabica / Robusta / Liberica" defaultValue={bean?.type} required /></div>
+            <div className="space-y-2"><Label htmlFor={`description-${bean?.id || 'new'}`}>Deskripsi</Label><Textarea id={`description-${bean?.id || 'new'}`} name="description" defaultValue={bean?.description} required /></div>
+            <div className="space-y-2"><Label htmlFor={`rating-${bean?.id || 'new'}`}>Rating (1-5)</Label><Input id={`rating-${bean?.id || 'new'}`} name="rating" type="number" min="1" max="5" defaultValue={bean?.rating} required /></div>
+            <ImagePicker currentImageId={bean?.imageId} onSelect={setSelectedImage} />
+            <DialogFooter>
+                <Button type="submit">Simpan</Button>
+                <DialogTrigger asChild>
+                    <Button type="button" variant="ghost" id={closeBtnId}>Batal</Button>
+                </DialogTrigger>
+            </DialogFooter>
+        </form>
+    );
+
     return (
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg w-full">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -157,29 +174,18 @@ export default function AdminCoffeeBeansPage() {
                     <CardTitle>Kelola Biji Kopi</CardTitle>
                     <CardDescription>Untuk halaman "Learn Coffee".</CardDescription>
                 </div>
-                <Dialog onOpenChange={() => setSelectedImage('')}>
+                <Dialog onOpenChange={(open) => !open && setSelectedImage('')}>
                     <DialogTrigger asChild>
                         <Button>
                             <Plus className="h-4 w-4 mr-2" />
                             Tambah Baru
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-lg">
+                    <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
                         <DialogHeader><DialogTitle>Tambah Biji Kopi Baru</DialogTitle></DialogHeader>
-                        <form onSubmit={(e) => handleSaveCoffeeBean(e)} className="space-y-4">
-                            <div className="space-y-2"><Label htmlFor="name">Nama</Label><Input id="name" name="name" required /></div>
-                            <div className="space-y-2"><Label htmlFor="origin">Asal</Label><Input id="origin" name="origin" required /></div>
-                            <div className="space-y-2"><Label htmlFor="type">Tipe</Label><Input id="type" name="type" placeholder="Arabica / Robusta / Liberica" required /></div>
-                            <div className="space-y-2"><Label htmlFor="description">Deskripsi</Label><Textarea id="description" name="description" required /></div>
-                            <div className="space-y-2"><Label htmlFor="rating">Rating (1-5)</Label><Input id="rating" name="rating" type="number" min="1" max="5" required /></div>
-                            <ImagePicker onSelect={setSelectedImage} />
-                            <DialogFooter>
-                                <Button type="submit">Simpan</Button>
-                                <DialogTrigger asChild>
-                                    <Button type="button" variant="ghost" id="close-bean-new-dialog">Batal</Button>
-                                </DialogTrigger>
-                            </DialogFooter>
-                        </form>
+                        <div className="overflow-y-auto -mr-6 pr-6">
+                            <CoffeeBeanForm onSubmit={(e) => handleSaveCoffeeBean(e)} closeBtnId="close-bean-new-dialog" />
+                        </div>
                     </DialogContent>
                 </Dialog>
             </CardHeader>
@@ -188,24 +194,13 @@ export default function AdminCoffeeBeansPage() {
                     <div key={bean.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                         <p className="font-medium">{bean.name}</p>
                         <div className="flex items-center gap-2">
-                            <Dialog onOpenChange={() => setSelectedImage(bean.imageId)}>
-                                <DialogTrigger asChild><Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button></DialogTrigger>
-                                <DialogContent className="max-w-lg">
+                            <Dialog onOpenChange={(open) => !open && setSelectedImage('')}>
+                                <DialogTrigger asChild><Button variant="outline" size="icon" onClick={() => setSelectedImage(bean.imageId)}><Edit className="h-4 w-4" /></Button></DialogTrigger>
+                                 <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
                                     <DialogHeader><DialogTitle>Edit {bean.name}</DialogTitle></DialogHeader>
-                                    <form onSubmit={(e) => handleSaveCoffeeBean(e, bean.id)} className="space-y-4">
-                                        <div className="space-y-2"><Label htmlFor={`name-${bean.id}`}>Nama</Label><Input id={`name-${bean.id}`} name="name" defaultValue={bean.name} required /></div>
-                                        <div className="space-y-2"><Label htmlFor={`origin-${bean.id}`}>Asal</Label><Input id={`origin-${bean.id}`} name="origin" defaultValue={bean.origin} required /></div>
-                                        <div className="space-y-2"><Label htmlFor={`type-${bean.id}`}>Tipe</Label><Input id={`type-${bean.id}`} name="type" defaultValue={bean.type} required /></div>
-                                        <div className="space-y-2"><Label htmlFor={`description-${bean.id}`}>Deskripsi</Label><Textarea id={`description-${bean.id}`} name="description" defaultValue={bean.description} required /></div>
-                                        <div className="space-y-2"><Label htmlFor={`rating-${bean.id}`}>Rating (1-5)</Label><Input id={`rating-${bean.id}`} name="rating" type="number" min="1" max="5" defaultValue={bean.rating} required /></div>
-                                        <ImagePicker currentImageId={bean.imageId} onSelect={setSelectedImage} />
-                                        <DialogFooter>
-                                            <Button type="submit">Simpan Perubahan</Button>
-                                            <DialogTrigger asChild>
-                                                <Button type="button" variant="ghost" id={`close-bean-${bean.id}-dialog`}>Batal</Button>
-                                            </DialogTrigger>
-                                        </DialogFooter>
-                                    </form>
+                                    <div className="overflow-y-auto -mr-6 pr-6">
+                                        <CoffeeBeanForm bean={bean} onSubmit={(e) => handleSaveCoffeeBean(e, bean.id)} closeBtnId={`close-bean-${bean.id}-dialog`} />
+                                    </div>
                                 </DialogContent>
                             </Dialog>
                             <Button variant="destructive" size="icon" onClick={() => handleDeleteCoffeeBean(bean.id)}><Trash2 className="h-4 w-4" /></Button>

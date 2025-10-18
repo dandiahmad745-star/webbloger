@@ -200,6 +200,20 @@ export default function AdminPlaylistSayaPage() {
         )
     }
 
+    const SongForm = ({ onSubmit, closeBtnId }: { onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => (
+        <form onSubmit={onSubmit} className="space-y-4">
+            <div className="space-y-2"><Label htmlFor="song-title">Judul Lagu</Label><Input id="song-title" name="title" required /></div>
+            <div className="space-y-2"><Label htmlFor="artist">Artis</Label><Input id="artist" name="artist" required /></div>
+            <div className="space-y-2"><Label htmlFor="audio-file">File Audio (Maks 5MB)</Label><Input id="audio-file" name="audio-file" type="file" accept="audio/*" required /></div>
+            <DialogFooter>
+                <Button type="submit">Simpan Lagu</Button>
+                 <DialogTrigger asChild>
+                    <Button type="button" variant="ghost" id={closeBtnId}>Batal</Button>
+                </DialogTrigger>
+            </DialogFooter>
+        </form>
+    );
+
     return (
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
             <CardHeader>
@@ -223,19 +237,11 @@ export default function AdminPlaylistSayaPage() {
                         <DialogTrigger asChild>
                             <Button><Plus className="h-4 w-4 mr-2" />Tambah Lagu</Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
                             <DialogHeader><DialogTitle>Tambah Lagu Baru</DialogTitle></DialogHeader>
-                            <form onSubmit={(e) => handleSaveSong(e)} className="space-y-4">
-                                <div className="space-y-2"><Label htmlFor="song-title">Judul Lagu</Label><Input id="song-title" name="title" required /></div>
-                                <div className="space-y-2"><Label htmlFor="artist">Artis</Label><Input id="artist" name="artist" required /></div>
-                                <div className="space-y-2"><Label htmlFor="audio-file">File Audio (Maks 5MB)</Label><Input id="audio-file" name="audio-file" type="file" accept="audio/*" required /></div>
-                                <DialogFooter>
-                                    <Button type="submit">Simpan Lagu</Button>
-                                     <DialogTrigger asChild>
-                                        <Button type="button" variant="ghost" id="close-song-new-dialog">Batal</Button>
-                                    </DialogTrigger>
-                                </DialogFooter>
-                            </form>
+                             <div className="overflow-y-auto -mr-6 pr-6">
+                                <SongForm onSubmit={(e) => handleSaveSong(e)} closeBtnId="close-song-new-dialog" />
+                            </div>
                         </DialogContent>
                     </Dialog>
                 </div>

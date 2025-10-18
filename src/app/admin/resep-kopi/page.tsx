@@ -43,7 +43,7 @@ export default function AdminResepKopiPage() {
         if (selectedCountry) {
             const countryData = aseanCountries.find(c => c.name === selectedCountry);
             setAvailableCities(countryData?.cities || []);
-            setSelectedCity(''); // Reset city when country changes
+            // Don't reset city if we are just loading data
         } else {
             setAvailableCities([]);
         }
@@ -177,14 +177,14 @@ export default function AdminResepKopiPage() {
 
     const RecipeForm = ({ recipe, onSubmit, closeBtnId }: { recipe?: CoffeeRecipe, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => {
         return (
-        <form onSubmit={onSubmit} className="space-y-3 max-h-[70vh] overflow-y-auto p-1 pr-4">
+        <form onSubmit={onSubmit} className="space-y-3">
             <div className="space-y-1"><Label htmlFor="name">Nama Resep</Label><Input id="name" name="name" defaultValue={recipe?.name} required /></div>
             <div className="space-y-1"><Label htmlFor="description">Deskripsi Singkat</Label><Textarea id="description" name="description" defaultValue={recipe?.description} required rows={2} /></div>
             
              <div className="space-y-2">
                 <Label>Asal / Kategori</Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Select onValueChange={setSelectedCountry} value={selectedCountry}>
+                    <Select onValueChange={val => {setSelectedCountry(val); setSelectedCity('');}} value={selectedCountry}>
                         <SelectTrigger><SelectValue placeholder="Pilih negara..." /></SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
@@ -240,9 +240,10 @@ export default function AdminResepKopiPage() {
                     const parts = recipe.category.split(', ');
                     const countryName = parts.length > 1 ? parts[1] : parts[0];
                     const cityName = parts.length > 1 ? parts[0] : '';
-                    const countryData = aseanCountries.find(c => c.name === countryName);
                     
                     setSelectedCountry(countryName);
+                    
+                    const countryData = aseanCountries.find(c => c.name === countryName);
                     if(countryData) {
                         setAvailableCities(countryData.cities || []);
                     }
@@ -267,7 +268,7 @@ export default function AdminResepKopiPage() {
                 </div>
                 <Dialog onOpenChange={(open) => handleDialogOpening(open)}>
                     <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Resep</Button></DialogTrigger>
-                    <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Tambah Resep Baru</DialogTitle></DialogHeader><RecipeForm onSubmit={(e) => handleSaveRecipe(e)} closeBtnId="close-recipe-new-dialog" /></DialogContent>
+                    <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col"><DialogHeader><DialogTitle>Tambah Resep Baru</DialogTitle></DialogHeader><div className="overflow-y-auto -mr-6 pr-6"><RecipeForm onSubmit={(e) => handleSaveRecipe(e)} closeBtnId="close-recipe-new-dialog" /></div></DialogContent>
                 </Dialog>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -280,7 +281,7 @@ export default function AdminResepKopiPage() {
                         <div className="flex items-center gap-2">
                             <Dialog onOpenChange={(open) => handleDialogOpening(open, recipe)}>
                                 <DialogTrigger asChild><Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button></DialogTrigger>
-                                <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Edit {recipe.name}</DialogTitle></DialogHeader><RecipeForm recipe={recipe} onSubmit={(e) => handleSaveRecipe(e, recipe.id)} closeBtnId={`close-recipe-${recipe.id}-dialog`} /></DialogContent>
+                                <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col"><DialogHeader><DialogTitle>Edit {recipe.name}</DialogTitle></DialogHeader><div className="overflow-y-auto -mr-6 pr-6"><RecipeForm recipe={recipe} onSubmit={(e) => handleSaveRecipe(e, recipe.id)} closeBtnId={`close-recipe-${recipe.id}-dialog`} /></div></DialogContent>
                             </Dialog>
                             <Button variant="destructive" size="icon" onClick={() => handleDeleteRecipe(recipe.id)}><Trash2 className="h-4 w-4" /></Button>
                         </div>

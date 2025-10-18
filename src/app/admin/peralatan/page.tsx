@@ -173,6 +173,20 @@ export default function AdminPeralatanPage() {
             </div>
         )
     }
+    
+    const UtensilForm = ({ item, onSubmit, closeBtnId }: { item?: Utensil, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => (
+         <form onSubmit={onSubmit} className="space-y-4">
+            <div className="space-y-2"><Label htmlFor="name">Nama</Label><Input id="name" name="name" defaultValue={item?.name} required /></div>
+            <div className="space-y-2"><Label htmlFor="description">Deskripsi</Label><Textarea id="description" name="description" defaultValue={item?.description} required /></div>
+            <div className="space-y-2"><Label htmlFor="icon">Ikon (e.g., Wind, Coffee, Droplets)</Label><Input id="icon" name="icon" defaultValue={item?.icon} placeholder="Nama ikon dari Lucide React" required /></div>
+            <DialogFooter>
+                <Button type="submit">Simpan</Button>
+                <DialogTrigger asChild>
+                    <Button type="button" variant="ghost" id={closeBtnId}>Batal</Button>
+                </DialogTrigger>
+            </DialogFooter>
+        </form>
+    );
 
     return (
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
@@ -200,19 +214,11 @@ export default function AdminPeralatanPage() {
                                 Tambah Item
                             </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
                             <DialogHeader><DialogTitle>Tambah Peralatan Baru</DialogTitle></DialogHeader>
-                            <form onSubmit={(e) => handleSaveUtensilItem(e)} className="space-y-4">
-                                <div className="space-y-2"><Label htmlFor="name">Nama</Label><Input id="name" name="name" required /></div>
-                                <div className="space-y-2"><Label htmlFor="description">Deskripsi</Label><Textarea id="description" name="description" required /></div>
-                                <div className="space-y-2"><Label htmlFor="icon">Ikon (e.g., Wind, Coffee, Droplets)</Label><Input id="icon" name="icon" placeholder="Nama ikon dari Lucide React" required /></div>
-                                <DialogFooter>
-                                    <Button type="submit">Simpan</Button>
-                                    <DialogTrigger asChild>
-                                        <Button type="button" variant="ghost" id="close-utensil-new-dialog">Batal</Button>
-                                    </DialogTrigger>
-                                </DialogFooter>
-                            </form>
+                             <div className="overflow-y-auto -mr-6 pr-6">
+                                <UtensilForm onSubmit={(e) => handleSaveUtensilItem(e)} closeBtnId="close-utensil-new-dialog" />
+                            </div>
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -224,19 +230,11 @@ export default function AdminPeralatanPage() {
                             <div className="flex items-center gap-2">
                                 <Dialog>
                                     <DialogTrigger asChild><Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button></DialogTrigger>
-                                    <DialogContent>
+                                    <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
                                         <DialogHeader><DialogTitle>Edit {item.name}</DialogTitle></DialogHeader>
-                                        <form onSubmit={(e) => handleSaveUtensilItem(e, item.name)} className="space-y-4">
-                                            <div className="space-y-2"><Label htmlFor={`name-${item.name}`}>Nama</Label><Input id={`name-${item.name}`} name="name" defaultValue={item.name} required /></div>
-                                            <div className="space-y-2"><Label htmlFor={`description-${item.name}`}>Deskripsi</Label><Textarea id={`description-${item.name}`} name="description" defaultValue={item.description} required /></div>
-                                            <div className="space-y-2"><Label htmlFor={`icon-${item.name}`}>Ikon</Label><Input id={`icon-${item.name}`} name="icon" defaultValue={item.icon} placeholder="Nama ikon dari Lucide React" required /></div>
-                                            <DialogFooter>
-                                                <Button type="submit">Simpan Perubahan</Button>
-                                                <DialogTrigger asChild>
-                                                    <Button type="button" variant="ghost" id={`close-utensil-${item.name.replace(/\s+/g, '-')}-dialog`}>Batal</Button>
-                                                </DialogTrigger>
-                                            </DialogFooter>
-                                        </form>
+                                         <div className="overflow-y-auto -mr-6 pr-6">
+                                            <UtensilForm item={item} onSubmit={(e) => handleSaveUtensilItem(e, item.name)} closeBtnId={`close-utensil-${item.name.replace(/\s+/g, '-')}-dialog`} />
+                                        </div>
                                     </DialogContent>
                                 </Dialog>
                                 <Button variant="destructive" size="icon" onClick={() => handleDeleteUtensilItem(item.name)}><Trash2 className="h-4 w-4" /></Button>
