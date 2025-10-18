@@ -34,6 +34,7 @@ export default function AdminPeralatanPage() {
             ...utensilsData,
             title: formData.get('title') as string,
             description: formData.get('description') as string,
+            imageId: formData.get('imageId') as string,
         };
         setUtensilsData(updatedData);
         localStorage.setItem('utensilsData', JSON.stringify(updatedData));
@@ -92,6 +93,7 @@ export default function AdminPeralatanPage() {
                     <h3 className="text-lg font-medium text-primary">Informasi Umum</h3>
                     <div className="space-y-2"><Label htmlFor="utensils-title">Judul Halaman</Label><Input id="utensils-title" name="title" defaultValue={utensilsData.title} /></div>
                     <div className="space-y-2"><Label htmlFor="utensils-description">Deskripsi Halaman</Label><Input id="utensils-description" name="description" defaultValue={utensilsData.description} /></div>
+                    <div className="space-y-2"><Label htmlFor="utensils-imageId">Image ID</Label><Input id="utensils-imageId" name="imageId" defaultValue={utensilsData.imageId} /></div>
                     <div className="flex justify-end">
                         <Button type="submit">Simpan Info Umum</Button>
                     </div>
@@ -154,5 +156,3 @@ export default function AdminPeralatanPage() {
         </Card>
     );
 }
-
-    
