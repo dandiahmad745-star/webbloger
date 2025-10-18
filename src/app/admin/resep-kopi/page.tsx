@@ -16,6 +16,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { worldRegions, allCountries, type City } from "@/lib/world-regions";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
     const [currentSelection, setCurrentSelection] = useState(currentImageId);
@@ -268,31 +269,38 @@ export default function AdminResepKopiPage() {
     };
 
     const processImportedRecipes = (importedRecipes: any[]) => {
-        if (Array.isArray(importedRecipes) && importedRecipes.every(item => 'id' in item && 'name' in item)) {
-            const currentRecipes = [...recipesData];
-            let newRecipesCount = 0;
-
-            importedRecipes.forEach((newRecipe: CoffeeRecipe) => {
-                const isDuplicate = currentRecipes.some(existingRecipe => existingRecipe.id === newRecipe.id || existingRecipe.name === newRecipe.name);
-                if (!isDuplicate) {
-                    currentRecipes.push(newRecipe);
-                    newRecipesCount++;
-                }
-            });
-
-            setRecipesData(currentRecipes);
-            localStorage.setItem('resepKopiData', JSON.stringify(currentRecipes));
-
-            if (newRecipesCount > 0) {
-                toast({ title: "Impor Berhasil", description: `${newRecipesCount} resep baru telah ditambahkan.` });
-            } else {
-                toast({ title: "Tidak Ada Resep Baru", description: "Semua resep dalam file sudah ada di koleksi Anda." });
-            }
-             return true;
-        } else {
+        if (!Array.isArray(importedRecipes) || !importedRecipes.every(item => 'id' in item && 'name' in item)) {
             throw new Error("Invalid JSON format.");
         }
+        
+        const currentRecipes = [...recipesData];
+        let newRecipesCount = 0;
+        let skippedCount = 0;
+
+        importedRecipes.forEach((newRecipe: CoffeeRecipe) => {
+            const isDuplicate = currentRecipes.some(existingRecipe => 
+                existingRecipe.id === newRecipe.id || existingRecipe.name.toLowerCase() === newRecipe.name.toLowerCase()
+            );
+
+            if (!isDuplicate) {
+                currentRecipes.push(newRecipe);
+                newRecipesCount++;
+            } else {
+                skippedCount++;
+            }
+        });
+
+        setRecipesData(currentRecipes);
+        localStorage.setItem('resepKopiData', JSON.stringify(currentRecipes));
+
+        if (newRecipesCount > 0) {
+            toast({ title: "Impor Berhasil", description: `${newRecipesCount} resep baru ditambahkan. ${skippedCount} resep duplikat dilewati.` });
+        } else {
+            toast({ title: "Tidak Ada Resep Baru", description: "Semua resep dalam file sudah ada di koleksi Anda." });
+        }
+        return true;
     };
+
 
     const handleImportFromFile = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -367,38 +375,33 @@ export default function AdminResepKopiPage() {
 
     return (
         <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg w-full">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                     <CardTitle>Kelola Resep Kopi</CardTitle>
                     <CardDescription>Tambah, edit, atau hapus resep untuk halaman "Resep Kopi".</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                    <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
-                    <Dialog open={isPasteImportOpen} onOpenChange={setIsPasteImportOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline"><FileJson className="h-4 w-4 mr-2" />Impor dari Teks</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Impor Resep dari Teks</DialogTitle>
-                            </DialogHeader>
-                            <div className="py-4">
-                                <Label htmlFor="json-paste-area">Tempel konten JSON di sini:</Label>
-                                <Textarea 
-                                    id="json-paste-area"
-                                    className="mt-2 font-mono h-64"
-                                    placeholder="[&#10;  {&#10;    &quot;id&quot;: &quot;...&quot;,&#10;    &quot;name&quot;: &quot;...&quot;&#10;    ...&#10;  }&#10;]"
-                                    value={jsonInput}
-                                    onChange={(e) => setJsonInput(e.target.value)}
-                                />
-                            </div>
-                            <DialogFooter>
-                                <Button onClick={handleImportFromJsonText}>Impor Sekarang</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                    <Button variant="outline" onClick={handleImportClick}><UploadCloud className="h-4 w-4 mr-2" />Impor File</Button>
-                    <Button variant="outline" onClick={handleExport}><Download className="h-4 w-4 mr-2" />Ekspor</Button>
+                     <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline"><UploadCloud className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                             <DropdownMenuItem onSelect={handleImportClick}>
+                                <UploadCloud className="mr-2 h-4 w-4" />
+                                Impor dari File...
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setIsPasteImportOpen(true)}>
+                                <FileJson className="mr-2 h-4 w-4" />
+                                Impor dari Teks...
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={handleExport}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Ekspor ke JSON
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <Dialog onOpenChange={(open) => handleDialogOpening(open)}>
                         <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Resep</Button></DialogTrigger>
                         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col"><DialogHeader><DialogTitle>Tambah Resep Baru</DialogTitle></DialogHeader><div className="overflow-y-auto -mr-6 pr-6">
@@ -445,12 +448,16 @@ export default function AdminResepKopiPage() {
                     </div>
                 ))}
             </CardContent>
+            <Dialog open={isPasteImportOpen} onOpenChange={setIsPasteImportOpen}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Impor Resep dari Teks</DialogTitle></DialogHeader>
+                    <div className="py-4">
+                        <Label htmlFor="json-paste-area-recipe">Tempel konten JSON di sini:</Label>
+                        <Textarea id="json-paste-area-recipe" className="mt-2 font-mono h-64" value={jsonInput} onChange={(e) => setJsonInput(e.target.value)} />
+                    </div>
+                    <DialogFooter><Button onClick={handleImportFromJsonText}>Impor Sekarang</Button></DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card>
     );
 }
-
-    
-
-    
-
-    
