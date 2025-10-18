@@ -15,7 +15,7 @@ import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-imag
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { aseanCountries, otherRegions, type City } from "@/lib/asean-regions";
+import { worldRegions, allCountries, type City } from "@/lib/world-regions";
 
 export default function AdminResepKopiPage() {
     const { toast } = useToast();
@@ -37,14 +37,12 @@ export default function AdminResepKopiPage() {
         }
     }, []);
 
-    useEffect(() => {
-        if (selectedCountry) {
-            const countryData = aseanCountries.find(c => c.name === selectedCountry);
-            setAvailableCities(countryData?.cities || []);
-        } else {
-            setAvailableCities([]);
-        }
-    }, [selectedCountry]);
+    const handleCountryChange = (countryName: string) => {
+        setSelectedCountry(countryName);
+        const countryData = allCountries.find(c => c.name === countryName);
+        setAvailableCities(countryData?.cities || []);
+        setSelectedCity(''); // Reset kota saat negara berubah
+    };
 
     const resetCategorySelection = () => {
         setSelectedCountry('');
@@ -181,28 +179,24 @@ export default function AdminResepKopiPage() {
              <div className="space-y-2">
                 <Label>Asal / Kategori</Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Select onValueChange={val => {setSelectedCountry(val); setSelectedCity('');}} value={selectedCountry}>
+                    <Select onValueChange={handleCountryChange} value={selectedCountry}>
                         <SelectTrigger><SelectValue placeholder="Pilih negara..." /></SelectTrigger>
                         <SelectContent>
-                            <SelectGroup>
-                                <SelectLabel>Negara ASEAN</SelectLabel>
-                                {aseanCountries.map(country => (
-                                    <SelectItem key={country.name} value={country.name}>{country.name}</SelectItem>
-                                ))}
-                            </SelectGroup>
-                            <SelectGroup>
-                                <SelectLabel>Lainnya</SelectLabel>
-                                 {otherRegions.map(region => (
-                                    <SelectItem key={region.name} value={region.name}>{region.name}</SelectItem>
-                                ))}
-                            </SelectGroup>
+                            {worldRegions.map(continent => (
+                                <SelectGroup key={continent.name}>
+                                    <SelectLabel>{continent.name}</SelectLabel>
+                                    {continent.countries.map(country => (
+                                        <SelectItem key={country.name} value={country.name}>{country.name}</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            ))}
                         </SelectContent>
                     </Select>
                     <Select onValueChange={setSelectedCity} value={selectedCity} disabled={availableCities.length === 0}>
-                        <SelectTrigger><SelectValue placeholder="Pilih kota/provinsi..." /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder="Pilih kota/wilayah..." /></SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                <SelectLabel>Kota/Provinsi di {selectedCountry}</SelectLabel>
+                                <SelectLabel>Kota/Wilayah di {selectedCountry}</SelectLabel>
                                 {availableCities.map(city => (
                                     <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
                                 ))}
@@ -238,12 +232,11 @@ export default function AdminResepKopiPage() {
                     const countryName = parts.length > 1 ? parts[1] : parts[0];
                     const cityName = parts.length > 1 ? parts[0] : '';
                     
-                    const allRegions = [...aseanCountries, ...otherRegions.map(r => ({name: r.name, cities: []}))];
-                    const countryData = allRegions.find(c => c.name === countryName);
+                    const countryData = allCountries.find(c => c.name === countryName);
                     
                     setSelectedCountry(countryName);
 
-                    if (countryData && 'cities' in countryData && countryData.cities.length > 0) {
+                    if (countryData && countryData.cities.length > 0) {
                         setAvailableCities(countryData.cities);
                         setSelectedCity(cityName);
                     } else {

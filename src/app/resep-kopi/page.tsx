@@ -11,7 +11,7 @@ import { staticData as initialStaticData, type CoffeeRecipe } from "../data-stat
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from '@/components/ui/dropdown-menu';
-import { aseanCountries, otherRegions } from '@/lib/asean-regions';
+import { worldRegions } from '@/lib/world-regions';
 
 export default function ResepKopiPage() {
     const [allRecipes, setAllRecipes] = useState<CoffeeRecipe[]>(initialStaticData.resepKopi);
@@ -54,7 +54,7 @@ export default function ResepKopiPage() {
         return null; // Or a loading spinner
     }
 
-    const allCategories = ['Semua', ...otherRegions.map(r => r.name), ...aseanCountries.map(c => c.name)];
+    const allCategories = ['Semua', ...worldRegions.flatMap(c => c.countries).map(co => co.name)];
 
     return (
         <main className="min-h-screen w-full bg-background text-foreground fade-in">
@@ -96,30 +96,20 @@ export default function ResepKopiPage() {
                                     <DropdownMenuLabel>Filter berdasarkan Wilayah</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onSelect={() => setFilter('Semua')}>Semua</DropdownMenuItem>
-                                     <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>ASEAN</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                {aseanCountries.map(country => (
-                                                    <DropdownMenuItem key={country.name} onSelect={() => setFilter(country.name)}>
-                                                        {country.name}
-                                                    </DropdownMenuItem>
-                                                ))}
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Lainnya</DropdownMenuSubTrigger>
-                                         <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                {otherRegions.map(region => (
-                                                     <DropdownMenuItem key={region.name} onSelect={() => setFilter(region.name)}>
-                                                        {region.name}
-                                                    </DropdownMenuItem>
-                                                ))}
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
+                                     {worldRegions.map(continent => (
+                                        <DropdownMenuSub key={continent.name}>
+                                            <DropdownMenuSubTrigger>{continent.name}</DropdownMenuSubTrigger>
+                                            <DropdownMenuPortal>
+                                                <DropdownMenuSubContent>
+                                                    {continent.countries.map(country => (
+                                                        <DropdownMenuItem key={country.name} onSelect={() => setFilter(country.name)}>
+                                                            {country.name}
+                                                        </DropdownMenuItem>
+                                                    ))}
+                                                </DropdownMenuSubContent>
+                                            </DropdownMenuPortal>
+                                        </DropdownMenuSub>
+                                     ))}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
