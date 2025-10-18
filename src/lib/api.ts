@@ -1,5 +1,4 @@
 
-
 export const fetcher = (url: string) => fetch(url).then(res => {
     if (!res.ok) {
         throw new Error('An error occurred while fetching the data.');
@@ -25,32 +24,20 @@ export const postData = async (key: string, data: any) => {
 };
 
 export const fetchServerData = async <T>(key: string, fallback: T): Promise<T> => {
-    // During a build, process.env.NEXT_PUBLIC_BASE_URL might not be available or correct.
-    // Also, making a fetch call to itself during SSG is an anti-pattern.
-    // The proper way is to have direct access to the data source.
-    // Since our "database" is Netlify Blobs, we can't access it directly here without Admin credentials.
-    // The workaround is to try fetching, but if it fails (like in a build environment), use the static fallback.
-    // This allows the page to be built statically. At runtime, the client-side fetch will get the fresh data.
     try {
-        if (typeof window !== 'undefined') {
-            // Client-side execution, fetch from the relative API endpoint
-             const res = await fetch(`/api/data?key=${key}`);
-             if (!res.ok) {
-                console.error(`Failed to fetch client-side data for key: ${key}. Status: ${res.status}`);
-                return fallback;
-            }
-            return res.json();
+        const baseUrl = process.env.URL || process.env.NEXT_PUBLIC_BASE_URL;
+
+        if (!baseUrl) {
+             // In a build environment (like Netlify), there might be no base URL.
+             // In this case, we rely on the static fallback.
+            console.warn(`Base URL not found for '${key}'. Using fallback data for build.`);
+            return fallback;
         }
 
-        // Server-side execution (during build or SSR)
-        const baseUrl = process.env.URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
-        
-        // In a real build environment (like Netlify), there is no localhost:9002 running.
-        // This fetch will fail, and we will fall back to static data, allowing the build to succeed.
-        const res = await fetch(`${baseUrl}/api/data?key=${key}`);
+        const res = await fetch(`${baseUrl}/api/data?key=${key}`, { next: { revalidate: 3600 } });
 
         if (!res.ok) {
-            console.warn(`Could not fetch server data for '${key}' during build. Using fallback data.`);
+            console.warn(`Could not fetch server data for '${key}' during build (Status: ${res.status}). Using fallback data.`);
             return fallback;
         }
         return res.json();

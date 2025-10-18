@@ -23,12 +23,12 @@ export function RecipeFilterProvider({ children }: { children: ReactNode }) {
 
     const setFilter = (newFilter: string) => {
         setFilterState(newFilter);
-        const params = new URLSearchParams(searchParams);
+        const params = new URLSearchParams(searchParams.toString());
         params.set('filter', newFilter);
         router.replace(`${pathname}?${params.toString()}`);
     };
 
-    const contextValue = useMemo(() => ({ filter, setFilter }), [filter]);
+    const contextValue = useMemo(() => ({ filter, setFilter }), [filter, setFilter]);
 
     return (
         <FilterContext.Provider value={contextValue}>
@@ -37,7 +37,7 @@ export function RecipeFilterProvider({ children }: { children: ReactNode }) {
     );
 }
 
-const useFilter = () => {
+export const useFilter = () => {
     const context = useContext(FilterContext);
     if (!context) {
         throw new Error('useFilter must be used within a RecipeFilterProvider');
@@ -45,7 +45,7 @@ const useFilter = () => {
     return context;
 }
 
-function FilterDropdown() {
+export function RecipeFilterDropdown() {
     const { filter, setFilter } = useFilter();
 
     return (
@@ -78,21 +78,3 @@ function FilterDropdown() {
         </DropdownMenu>
     );
 }
-
-function ClearFilterButton() {
-    const { setFilter } = useFilter();
-    return <Button variant="link" onClick={() => setFilter('Semua')}>Tampilkan semua resep</Button>;
-}
-
-// Wrapper component to provide context
-export function RecipeFilter({ children }: { children?: ReactNode }) {
-    return (
-        <RecipeFilterProvider>
-            {children ?? <FilterDropdown />}
-        </RecipeFilterProvider>
-    );
-}
-
-RecipeFilter.useFilter = useFilter;
-RecipeFilter.ClearButton = ClearFilterButton;
-RecipeFilter.Content = function RecipeContentPlaceholder() { return null; }; // Placeholder
