@@ -17,6 +17,21 @@ export type CoffeeRecipe = {
     imageId: string;
 }
 
+export type Song = {
+    title: string;
+    artist: string;
+    audioUrl: string;
+};
+
+export type Playlist = {
+    id: string;
+    title: string;
+    description: string;
+    imageId: string;
+    songs: Song[];
+};
+
+
 export const staticData = {
     mainPage: {
         name: "Arul Faathir",
@@ -54,12 +69,15 @@ export const staticData = {
         message: "Ini adalah pesan rahasia. Hanya untuk mata Anda.",
         imageId: "profile-picture",
     },
-    playlistSaya: {
-        title: "Playlist Saya",
-        description: "Beberapa lagu yang menemani secangkir kopi.",
-        imageId: "coffee-journey",
-        songs: [] as { title: string; artist: string; audioUrl: string }[],
-    },
+    playlistSaya: [
+        {
+            id: "playlist-pagi-semangat-1",
+            title: "Playlist Pagi Semangat",
+            description: "Beberapa lagu yang menemani secangkir kopi di pagi hari.",
+            imageId: "coffee-journey",
+            songs: [] as Song[],
+        }
+    ] as Playlist[],
     resepKopi: [
         {
             id: 'espresso-sempurna',

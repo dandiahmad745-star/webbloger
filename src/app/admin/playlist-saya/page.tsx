@@ -4,22 +4,17 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { staticData as initialStaticData } from "../../data-statis";
+import { staticData as initialStaticData, type Playlist, type Song } from "../../data-statis";
 import { useToast } from "@/hooks/use-toast";
+import { Edit, Plus, Trash2, Upload, Music, Download, UploadCloud, FileJson } from "lucide-react";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { Music, Plus, Trash2, Upload } from "lucide-react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-
-type Song = {
-    title: string;
-    artist: string;
-    audioUrl: string;
-};
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, onSelect: (id: string) => void }) => {
     const [currentSelection, setCurrentSelection] = useState(currentImageId);
@@ -115,6 +110,20 @@ const ImagePicker = ({ currentImageId, onSelect }: { currentImageId?: string, on
     )
 }
 
+const PlaylistForm = ({ playlist, onSubmit, onSelectImage, closeBtnId }: { playlist?: Playlist, onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, onSelectImage: (id: string) => void, closeBtnId: string }) => (
+    <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-2"><Label htmlFor="title">Judul Playlist</Label><Input id="title" name="title" defaultValue={playlist?.title} required /></div>
+        <div className="space-y-2"><Label htmlFor="description">Deskripsi</Label><Textarea id="description" name="description" defaultValue={playlist?.description} required /></div>
+        <ImagePicker currentImageId={playlist?.imageId} onSelect={onSelectImage} />
+        <DialogFooter>
+            <Button type="submit">Simpan Playlist</Button>
+            <DialogTrigger asChild>
+                <Button type="button" variant="ghost" id={closeBtnId}>Batal</Button>
+            </DialogTrigger>
+        </DialogFooter>
+    </form>
+);
+
 const SongForm = ({ onSubmit, closeBtnId }: { onSubmit: (e: React.FormEvent<HTMLFormElement>) => void, closeBtnId: string }) => (
     <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2"><Label htmlFor="song-title">Judul Lagu</Label><Input id="song-title" name="title" required /></div>
@@ -122,7 +131,7 @@ const SongForm = ({ onSubmit, closeBtnId }: { onSubmit: (e: React.FormEvent<HTML
         <div className="space-y-2"><Label htmlFor="audio-file">File Audio (Maks 2MB)</Label><Input id="audio-file" name="audio-file" type="file" accept="audio/*" required /></div>
         <DialogFooter>
             <Button type="submit">Simpan Lagu</Button>
-             <DialogTrigger asChild>
+            <DialogTrigger asChild>
                 <Button type="button" variant="ghost" id={closeBtnId}>Batal</Button>
             </DialogTrigger>
         </DialogFooter>
@@ -132,9 +141,13 @@ const SongForm = ({ onSubmit, closeBtnId }: { onSubmit: (e: React.FormEvent<HTML
 
 export default function AdminPlaylistSayaPage() {
     const { toast } = useToast();
-    const [playlistData, setPlaylistData] = useState(initialStaticData.playlistSaya);
+    const [playlistsData, setPlaylistsData] = useState<Playlist[]>(initialStaticData.playlistSaya);
     const [isClient, setIsClient] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(playlistData.imageId);
+    const [selectedImage, setSelectedImage] = useState('');
+    const importFileInputRef = useRef<HTMLInputElement>(null);
+    const [jsonInput, setJsonInput] = useState('');
+    const [isPasteImportOpen, setIsPasteImportOpen] = useState(false);
+
 
     useEffect(() => {
         setIsClient(true);
@@ -142,154 +155,282 @@ export default function AdminPlaylistSayaPage() {
             const savedData = localStorage.getItem('playlistSayaData');
             if (savedData) {
                 const parsedData = JSON.parse(savedData);
-                setPlaylistData(parsedData);
-                setSelectedImage(parsedData.imageId);
+                setPlaylistsData(parsedData);
             }
         } catch (error) {
             console.error("Failed to parse from localStorage", error);
         }
     }, []);
 
-    const handleSaveInfo = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const updatedData = {
-            ...playlistData,
-            title: formData.get('title') as string,
-            description: formData.get('description') as string,
-            imageId: selectedImage,
-        };
-        setPlaylistData(updatedData);
-        localStorage.setItem('playlistSayaData', JSON.stringify(updatedData));
-        toast({ title: "Sukses!", description: "Informasi Playlist telah diperbarui." });
+    const saveData = (data: Playlist[]) => {
+        setPlaylistsData(data);
+        localStorage.setItem('playlistSayaData', JSON.stringify(data));
     };
 
-    const handleSaveSong = (e: React.FormEvent<HTMLFormElement>, originalTitle?: string) => {
+    const handleSavePlaylist = (e: React.FormEvent<HTMLFormElement>, playlistId?: string) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         
+        let updatedPlaylists;
+        if (playlistId) {
+            updatedPlaylists = playlistsData.map(pl => pl.id === playlistId ? {
+                ...pl,
+                title: formData.get('title') as string,
+                description: formData.get('description') as string,
+                imageId: selectedImage || pl.imageId
+            } : pl);
+            toast({ title: "Sukses!", description: "Playlist telah diperbarui." });
+        } else {
+            const newPlaylist: Playlist = {
+                id: `playlist-${Date.now()}`,
+                title: formData.get('title') as string,
+                description: formData.get('description') as string,
+                imageId: selectedImage,
+                songs: []
+            };
+            updatedPlaylists = [...playlistsData, newPlaylist];
+            toast({ title: "Sukses!", description: "Playlist baru telah ditambahkan." });
+        }
+        
+        saveData(updatedPlaylists);
+        const closeBtnId = playlistId ? `close-playlist-${playlistId}-dialog` : 'close-playlist-new-dialog';
+        document.getElementById(closeBtnId)?.click();
+    };
+
+    const handleDeletePlaylist = (playlistId: string) => {
+        const updatedPlaylists = playlistsData.filter(pl => pl.id !== playlistId);
+        saveData(updatedPlaylists);
+        toast({ title: "Dihapus!", description: "Playlist telah dihapus." });
+    };
+
+    const handleSaveSong = (e: React.FormEvent<HTMLFormElement>, playlistId: string) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
         const audioFile = (e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement)?.files?.[0];
 
-        const saveSongData = (audioUrl: string) => {
+        if (!audioFile) {
+            toast({ variant: "destructive", title: "File Audio Dibutuhkan", description: "Silakan unggah file audio." });
+            return;
+        }
+
+        if (audioFile.size > 2 * 1024 * 1024) { // 2MB limit
+            toast({ variant: "destructive", title: "Ukuran file terlalu besar", description: "Ukuran file audio tidak boleh melebihi 2MB." });
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const audioUrl = event.target?.result as string;
             const newSong: Song = {
                 title: formData.get('title') as string,
                 artist: formData.get('artist') as string,
                 audioUrl: audioUrl
             };
-    
-            let updatedSongs;
-            if(originalTitle) {
-                updatedSongs = playlistData.songs.map(song => song.title === originalTitle ? newSong : song);
-            } else {
-                updatedSongs = [...playlistData.songs, newSong];
-            }
             
-            const updatedData = {...playlistData, songs: updatedSongs};
-            setPlaylistData(updatedData);
+            const updatedPlaylists = playlistsData.map(pl => {
+                if (pl.id === playlistId) {
+                    return { ...pl, songs: [...pl.songs, newSong] };
+                }
+                return pl;
+            });
+
             try {
-                localStorage.setItem('playlistSayaData', JSON.stringify(updatedData));
-                toast({ title: "Sukses!", description: `Lagu ${newSong.title} telah disimpan.` });
+                saveData(updatedPlaylists);
+                toast({ title: "Sukses!", description: `Lagu ${newSong.title} telah ditambahkan.` });
             } catch (error) {
                 toast({
                     variant: "destructive",
                     title: "Penyimpanan Penuh",
                     description: "Gagal menyimpan lagu. Penyimpanan lokal browser mungkin penuh.",
                 });
-                 // Rollback state if storage fails
-                setPlaylistData(playlistData);
                 return;
             }
-            
-            const closeBtnId = originalTitle ? `close-song-${originalTitle.replace(/\s+/g, '-')}-dialog` : 'close-song-new-dialog';
-            const closeBtn = document.getElementById(closeBtnId);
-            if(closeBtn) closeBtn.click();
+            const closeBtnId = `close-song-new-${playlistId}-dialog`;
+            document.getElementById(closeBtnId)?.click();
         };
-
-        if (audioFile) {
-             if (audioFile.size > 2 * 1024 * 1024) { // 2MB limit
-                toast({ variant: "destructive", title: "Ukuran file terlalu besar", description: "Ukuran file audio tidak boleh melebihi 2MB." });
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                saveSongData(event.target?.result as string);
-            };
-            reader.readAsDataURL(audioFile);
-        } else {
-            // If no new file is uploaded, this must be an edit, so we keep the old audioUrl.
-            // This logic assumes we don't allow editing form without re-uploading file, which is okay for now.
-            const existingSong = playlistData.songs.find(s => s.title === originalTitle);
-            if(existingSong) {
-                saveSongData(existingSong.audioUrl);
-            } else {
-                 toast({ variant: "destructive", title: "File Audio Dibutuhkan", description: "Silakan unggah file audio." });
-            }
-        }
+        reader.readAsDataURL(audioFile);
     };
     
-    const handleDeleteSong = (title: string) => {
-        const updatedSongs = playlistData.songs.filter(song => song.title !== title);
-        const updatedData = { ...playlistData, songs: updatedSongs };
-        setPlaylistData(updatedData);
-        localStorage.setItem('playlistSayaData', JSON.stringify(updatedData));
-        toast({ title: "Dihapus!", description: `Lagu ${title} telah dihapus.` });
-    }
+    const handleDeleteSong = (playlistId: string, songTitle: string) => {
+        const updatedPlaylists = playlistsData.map(pl => {
+            if (pl.id === playlistId) {
+                return { ...pl, songs: pl.songs.filter(song => song.title !== songTitle) };
+            }
+            return pl;
+        });
+        saveData(updatedPlaylists);
+        toast({ title: "Dihapus!", description: `Lagu ${songTitle} telah dihapus.` });
+    };
+
+    const handleExport = () => {
+        const dataStr = JSON.stringify(playlistsData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        const exportFileDefaultName = 'playlist.json';
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        toast({ title: "Ekspor Berhasil", description: "File playlist.json telah diunduh." });
+    };
+
+    const handleImportClick = () => {
+        importFileInputRef.current?.click();
+    };
+
+    const processImportedData = (importedData: any[]) => {
+        if (Array.isArray(importedData) && importedData.every(item => 'id' in item && 'title' in item && 'songs' in item)) {
+            const currentData = [...playlistsData];
+            let newItemsCount = 0;
+
+            importedData.forEach((newItem: Playlist) => {
+                const isDuplicate = currentData.some(existingItem => existingItem.id === newItem.id || existingItem.title === newItem.title);
+                if (!isDuplicate) {
+                    currentData.push(newItem);
+                    newItemsCount++;
+                }
+            });
+
+            saveData(currentData);
+
+            if (newItemsCount > 0) {
+                toast({ title: "Impor Berhasil", description: `${newItemsCount} playlist baru telah ditambahkan.` });
+            } else {
+                toast({ title: "Tidak Ada Playlist Baru", description: "Semua playlist dalam file sudah ada di koleksi Anda." });
+            }
+            return true;
+        } else {
+            throw new Error("Invalid JSON format.");
+        }
+    };
+
+    const handleImportFromFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target?.result as string;
+                    const importedData = JSON.parse(text);
+                    processImportedData(importedData);
+                } catch (error) {
+                    toast({ variant: "destructive", title: "Impor Gagal", description: "File JSON tidak valid atau formatnya salah." });
+                }
+            };
+            reader.readAsText(file);
+        }
+        if (event.target) event.target.value = '';
+    };
+
+    const handleImportFromJsonText = () => {
+        if (!jsonInput.trim()) {
+            toast({ variant: "destructive", title: "Input Kosong", description: "Silakan tempel konten JSON." });
+            return;
+        }
+        try {
+            const importedData = JSON.parse(jsonInput);
+            if (processImportedData(importedData)) {
+                setJsonInput('');
+                setIsPasteImportOpen(false);
+            }
+        } catch (error) {
+            toast({ variant: "destructive", title: "Impor Gagal", description: "Teks JSON tidak valid atau formatnya salah." });
+        }
+    };
 
     if (!isClient) {
         return null;
     }
     
     return (
-        <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
-            <CardHeader>
-                <CardTitle>Kelola "Playlist Saya"</CardTitle>
-                <CardDescription>Ubah info umum playlist dan kelola daftar lagu.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSaveInfo} className="space-y-4 p-6 border rounded-lg mb-8">
-                    <h3 className="text-lg font-medium text-primary">Informasi Umum</h3>
-                    <div className="space-y-2"><Label htmlFor="title">Judul Halaman</Label><Input id="title" name="title" defaultValue={playlistData.title} /></div>
-                    <div className="space-y-2"><Label htmlFor="description">Deskripsi Halaman</Label><Textarea id="description" name="description" defaultValue={playlistData.description} /></div>
-                    <ImagePicker currentImageId={selectedImage} onSelect={setSelectedImage} />
-                    <div className="flex justify-end">
-                        <Button type="submit">Simpan Info Umum</Button>
-                    </div>
-                </form>
-
-                <div className="flex items-center justify-between mb-4">
-                     <h3 className="text-lg font-medium text-primary">Daftar Lagu</h3>
-                     <Dialog>
+        <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg w-full">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Kelola "Playlist Saya"</CardTitle>
+                    <CardDescription>Ubah info umum playlist dan kelola daftar lagu.</CardDescription>
+                </div>
+                 <div className="flex items-center gap-2">
+                    <input type="file" ref={importFileInputRef} className="hidden" accept=".json" onChange={handleImportFromFile} />
+                    <Dialog open={isPasteImportOpen} onOpenChange={setIsPasteImportOpen}>
                         <DialogTrigger asChild>
-                            <Button><Plus className="h-4 w-4 mr-2" />Tambah Lagu</Button>
+                            <Button variant="outline"><FileJson className="h-4 w-4 mr-2" />Impor Teks</Button>
                         </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>Impor Playlist dari Teks</DialogTitle></DialogHeader>
+                            <div className="py-4">
+                                <Label htmlFor="json-paste-area">Tempel konten JSON di sini:</Label>
+                                <Textarea id="json-paste-area" className="mt-2 font-mono h-64" value={jsonInput} onChange={(e) => setJsonInput(e.target.value)} />
+                            </div>
+                            <DialogFooter><Button onClick={handleImportFromJsonText}>Impor Sekarang</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    <Button variant="outline" onClick={handleImportClick}><UploadCloud className="h-4 w-4 mr-2" />Impor File</Button>
+                    <Button variant="outline" onClick={handleExport}><Download className="h-4 w-4 mr-2" />Ekspor</Button>
+                    <Dialog onOpenChange={(open) => !open && setSelectedImage('')}>
+                        <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Tambah Playlist</Button></DialogTrigger>
                         <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
-                            <DialogHeader><DialogTitle>Tambah Lagu Baru</DialogTitle></DialogHeader>
-                             <div className="overflow-y-auto -mr-6 pr-6">
-                                <SongForm onSubmit={(e) => handleSaveSong(e)} closeBtnId="close-song-new-dialog" />
+                            <DialogHeader><DialogTitle>Tambah Playlist Baru</DialogTitle></DialogHeader>
+                            <div className="overflow-y-auto -mr-6 pr-6">
+                                <PlaylistForm onSubmit={(e) => handleSavePlaylist(e)} onSelectImage={setSelectedImage} closeBtnId="close-playlist-new-dialog" />
                             </div>
                         </DialogContent>
                     </Dialog>
                 </div>
-
-                 <div className="space-y-4">
-                    {playlistData.songs.map(song => (
-                         <div key={song.title} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                            <div className="flex items-center gap-3">
-                                <Music className="h-5 w-5 text-primary" />
-                                <div>
-                                    <p className="font-medium">{song.title}</p>
-                                    <p className="text-sm text-muted-foreground">{song.artist}</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <Accordion type="single" collapsible className="w-full">
+                    {playlistsData.map(playlist => (
+                        <AccordionItem value={playlist.id} key={playlist.id} className="bg-muted/50 rounded-lg px-4 mb-2">
+                             <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center justify-between w-full">
+                                    <p className="font-medium text-lg">{playlist.title}</p>
+                                    <div className="flex items-center gap-2 pr-4">
+                                        <Dialog onOpenChange={(open) => { if (!open) setSelectedImage(''); else setSelectedImage(playlist.imageId)}}>
+                                            <DialogTrigger asChild onClick={(e) => e.stopPropagation()}><Button variant="outline" size="icon"><Edit className="h-4 w-4" /></Button></DialogTrigger>
+                                            <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+                                                <DialogHeader><DialogTitle>Edit {playlist.title}</DialogTitle></DialogHeader>
+                                                <div className="overflow-y-auto -mr-6 pr-6">
+                                                    <PlaylistForm playlist={playlist} onSubmit={(e) => handleSavePlaylist(e, playlist.id)} onSelectImage={setSelectedImage} closeBtnId={`close-playlist-${playlist.id}-dialog`} />
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                        <Button variant="destructive" size="icon" onClick={(e) => {e.stopPropagation(); handleDeletePlaylist(playlist.id)}}><Trash2 className="h-4 w-4" /></Button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button variant="destructive" size="icon" onClick={() => handleDeleteSong(song.title)}><Trash2 className="h-4 w-4" /></Button>
-                            </div>
-                        </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-2">
+                                <div className="border-t border-primary/10 pt-4">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="font-semibold">Daftar Lagu</h4>
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button size="sm"><Plus className="h-4 w-4 mr-2" />Tambah Lagu</Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-lg">
+                                                <DialogHeader><DialogTitle>Tambah Lagu ke {playlist.title}</DialogTitle></DialogHeader>
+                                                <SongForm onSubmit={(e) => handleSaveSong(e, playlist.id)} closeBtnId={`close-song-new-${playlist.id}-dialog`} />
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {playlist.songs.length > 0 ? playlist.songs.map(song => (
+                                            <div key={song.title} className="flex items-center justify-between p-2 bg-background rounded-md">
+                                                <div className="flex items-center gap-3">
+                                                    <Music className="h-5 w-5 text-primary" />
+                                                    <div>
+                                                        <p className="font-medium">{song.title}</p>
+                                                        <p className="text-sm text-muted-foreground">{song.artist}</p>
+                                                    </div>
+                                                </div>
+                                                <Button variant="destructive" size="icon" onClick={() => handleDeleteSong(playlist.id, song.title)}><Trash2 className="h-4 w-4" /></Button>
+                                            </div>
+                                        )) : <p className="text-sm text-center text-muted-foreground py-4">Belum ada lagu di playlist ini.</p>}
+                                    </div>
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
                     ))}
-                </div>
+                </Accordion>
             </CardContent>
         </Card>
     );
 }
-
-    

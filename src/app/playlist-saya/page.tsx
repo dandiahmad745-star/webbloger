@@ -5,26 +5,32 @@ import { useState, useEffect, useRef } from 'react';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Play, Pause, Music } from "lucide-react";
+import { ArrowLeft, Play, Pause, Music, SkipForward, SkipBack } from "lucide-react";
 import Link from "next/link";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import { staticData as initialStaticData } from "../data-statis";
+import { staticData as initialStaticData, type Playlist, type Song } from "../data-statis";
 import { cn } from '@/lib/utils';
-
-type Song = {
-    title: string;
-    artist: string;
-    audioUrl: string;
-};
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel"
 
 export default function PlaylistSayaPage() {
-    const [pageData, setPageData] = useState(initialStaticData.playlistSaya);
+    const [playlists, setPlaylists] = useState<Playlist[]>(initialStaticData.playlistSaya);
     const [isClient, setIsClient] = useState(false);
     const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
-    const [currentSong, setCurrentSong] = useState<Song | null>(null);
+    
+    const [api, setApi] = useState<CarouselApi>()
+    const [currentPlaylist, setCurrentPlaylist] = useState<Playlist>();
+    const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const audioRef = useRef<HTMLAudioElement>(null);
 
+    // Load data from localStorage
     useEffect(() => {
         setIsClient(true);
         try {
@@ -38,40 +44,83 @@ export default function PlaylistSayaPage() {
             setAllImages(currentAllImages);
 
             if (savedData) {
-                setPageData(JSON.parse(savedData));
+                const parsedPlaylists = JSON.parse(savedData);
+                setPlaylists(parsedPlaylists);
+                if (parsedPlaylists.length > 0) {
+                    setCurrentPlaylist(parsedPlaylists[0]);
+                }
+            } else if (initialStaticData.playlistSaya.length > 0) {
+                 setCurrentPlaylist(initialStaticData.playlistSaya[0]);
             }
         } catch (error) {
             console.error("Failed to parse from localStorage", error);
         }
     }, []);
 
+    // Carousel API effect
+    useEffect(() => {
+        if (!api) return;
+        
+        const handleSelect = (api: CarouselApi) => {
+            const selectedPlaylist = playlists[api.selectedScrollSnap()];
+            setCurrentPlaylist(selectedPlaylist);
+            setIsPlaying(false);
+            setCurrentSongIndex(null);
+            if(audioRef.current) audioRef.current.src = "";
+        };
+
+        api.on("select", handleSelect);
+        return () => { api.off("select", handleSelect) };
+    }, [api, playlists]);
+
+    // Audio player effect
     useEffect(() => {
         if (audioRef.current) {
-            if (isPlaying) {
+            if (isPlaying && currentSongIndex !== null && currentPlaylist) {
+                const song = currentPlaylist.songs[currentSongIndex];
+                if (audioRef.current.src !== song.audioUrl) {
+                    audioRef.current.src = song.audioUrl;
+                }
                 audioRef.current.play().catch(e => console.error("Error playing audio:", e));
             } else {
                 audioRef.current.pause();
             }
         }
-    }, [isPlaying, currentSong]);
+    }, [isPlaying, currentSongIndex, currentPlaylist]);
 
-    const handlePlayPause = (song: Song) => {
-        if (currentSong?.title === song.title) {
+    const handlePlayPause = (index: number) => {
+        if (currentSongIndex === index) {
             setIsPlaying(!isPlaying);
         } else {
-            setCurrentSong(song);
+            setCurrentSongIndex(index);
             setIsPlaying(true);
-            if(audioRef.current) {
-                audioRef.current.src = song.audioUrl;
-            }
+        }
+    };
+
+    const handleNextSong = () => {
+        if (currentPlaylist && currentSongIndex !== null) {
+            const nextIndex = (currentSongIndex + 1) % currentPlaylist.songs.length;
+            setCurrentSongIndex(nextIndex);
+            setIsPlaying(true);
+        } else if (currentPlaylist && currentPlaylist.songs.length > 0) {
+            setCurrentSongIndex(0);
+            setIsPlaying(true);
         }
     };
     
-    const { title, description, imageId, songs } = pageData;
-    const backgroundImage: ImagePlaceholder | undefined = allImages.find(p => p.id === imageId);
+    const handlePrevSong = () => {
+        if (currentPlaylist && currentSongIndex !== null) {
+            const prevIndex = (currentSongIndex - 1 + currentPlaylist.songs.length) % currentPlaylist.songs.length;
+            setCurrentSongIndex(prevIndex);
+            setIsPlaying(true);
+        }
+    };
+
+    const currentSong = currentPlaylist && currentSongIndex !== null ? currentPlaylist.songs[currentSongIndex] : null;
+    const backgroundImage: ImagePlaceholder | undefined = allImages.find(p => p.id === currentPlaylist?.imageId);
 
     if (!isClient) {
-        return null;
+        return <div className='min-h-screen bg-background'/>;
     }
 
     return (
@@ -89,51 +138,79 @@ export default function PlaylistSayaPage() {
                 />
             )}
             <div className="absolute inset-0 bg-black/50 -z-10" />
+            <Link href="/" passHref>
+                <Button variant="ghost" size="icon" className="absolute top-4 left-4 z-20 text-white hover:bg-white/10">
+                    <ArrowLeft />
+                </Button>
+            </Link>
 
             <div className="w-full max-w-md mx-auto">
-                <Card className="bg-card/30 backdrop-blur-lg border-primary/20 shadow-2xl shadow-primary/10 rounded-2xl overflow-hidden">
-                    <CardHeader className="p-6">
-                        <div className="flex items-start justify-between">
-                             <Link href="/" passHref>
-                                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                                    <ArrowLeft />
-                                </Button>
-                            </Link>
-                             <div className="text-center flex-grow">
-                                <CardTitle className="font-headline text-4xl text-white">
-                                    {title}
-                                </CardTitle>
-                                <CardDescription className="font-body text-base text-white/80 pt-2">
-                                    {description}
-                                </CardDescription>
-                            </div>
-                            <div className="w-10"></div>
+                <Carousel setApi={setApi} className="w-full">
+                    <CarouselContent>
+                        {playlists.map((playlist) => (
+                            <CarouselItem key={playlist.id}>
+                                <Card className="bg-transparent border-none shadow-none text-white">
+                                    <CardHeader className="text-center">
+                                        <CardTitle className="font-headline text-4xl">{playlist.title}</CardTitle>
+                                        <CardDescription className="font-body text-base text-white/80 pt-2">{playlist.description}</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="p-4 space-y-2 max-h-[50vh] overflow-y-auto">
+                                        {playlist.songs.length > 0 ? playlist.songs.map((song, index) => (
+                                            <div 
+                                                key={song.title} 
+                                                className={cn(
+                                                    "flex items-center p-3 rounded-lg justify-between transition-colors cursor-pointer",
+                                                    currentSong?.title === song.title ? "bg-accent/30" : "bg-black/20 hover:bg-black/40"
+                                                )}
+                                                onClick={() => handlePlayPause(index)}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <Music className="h-5 w-5 text-accent" />
+                                                    <div>
+                                                        <p className="font-bold">{song.title}</p>
+                                                        <p className="text-sm text-white/70">{song.artist}</p>
+                                                    </div>
+                                                </div>
+                                                {currentSong?.title === song.title && isPlaying && <Pause className="h-5 w-5" />}
+                                                {currentSong?.title === song.title && !isPlaying && <Play className="h-5 w-5" />}
+                                            </div>
+                                        )) : (
+                                            <div className="text-center py-8 text-white/70">
+                                                <p>Belum ada lagu di playlist ini.</p>
+                                                <p className='text-sm mt-2'>Kelola playlist di Halaman Admin.</p>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    {playlists.length > 1 && (
+                        <>
+                           <CarouselPrevious className="left-2 text-white bg-white/10 border-white/20 hover:bg-white/20" />
+                           <CarouselNext className="right-2 text-white bg-white/10 border-white/20 hover:bg-white/20" />
+                        </>
+                    )}
+                </Carousel>
+                {currentPlaylist && currentPlaylist.songs.length > 0 && (
+                    <div className='text-center mt-4 p-4 bg-black/20 backdrop-blur-sm rounded-lg text-white'>
+                         <p className="font-bold text-lg truncate">{currentSong?.title || "Pilih sebuah lagu"}</p>
+                         <p className="text-sm text-white/70">{currentSong?.artist || ""}</p>
+                        <div className="flex justify-center items-center gap-4 mt-4">
+                            <Button size="icon" variant="ghost" className="text-white hover:bg-white/20" onClick={handlePrevSong} disabled={!currentSong}>
+                                <SkipBack />
+                            </Button>
+                             <Button size="icon" className="h-14 w-14 bg-white/20 text-white hover:bg-white/30" onClick={() => currentSongIndex !== null && handlePlayPause(currentSongIndex)} disabled={!currentPlaylist.songs.length}>
+                                {isPlaying ? <Pause size={28}/> : <Play size={28}/>}
+                            </Button>
+                            <Button size="icon" variant="ghost" className="text-white hover:bg-white/20" onClick={handleNextSong} disabled={!currentSong}>
+                                <SkipForward />
+                            </Button>
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-4 space-y-2">
-                        {songs.length > 0 ? songs.map((song) => (
-                            <div key={song.title} className="flex items-center p-3 bg-black/20 rounded-lg justify-between hover:bg-black/40 transition-colors">
-                                <div className="flex items-center gap-4">
-                                    <Music className="h-5 w-5 text-accent" />
-                                    <div>
-                                        <p className="font-bold text-white">{song.title}</p>
-                                        <p className="text-sm text-white/70">{song.artist}</p>
-                                    </div>
-                                </div>
-                                <Button size="icon" variant="ghost" className="text-white hover:bg-white/20" onClick={() => handlePlayPause(song)}>
-                                    {currentSong?.title === song.title && isPlaying ? <Pause /> : <Play />}
-                                </Button>
-                            </div>
-                        )) : (
-                            <div className="text-center py-8 text-white/70">
-                                <p>Belum ada lagu ditambahkan.</p>
-                                <p className='text-sm mt-2'>Kelola playlist di Halaman Admin.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                    </div>
+                )}
             </div>
-            {<audio ref={audioRef} onEnded={() => setIsPlaying(false)} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)}/>}
+            <audio ref={audioRef} onEnded={handleNextSong} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
         </main>
     );
 }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { staticData } from "@/app/data-statis";
+import { staticData, type Playlist, type Song } from "@/app/data-statis";
 
 export default function AdminTemplatePage() {
     const { toast } = useToast();
@@ -23,7 +23,6 @@ export default function AdminTemplatePage() {
     };
 
     const handleDownloadResepTemplate = () => {
-        // Provide a sample recipe structure
         const resepTemplate = [
             {
                 "id": "contoh-resep-123",
@@ -44,14 +43,36 @@ export default function AdminTemplatePage() {
         handleDownload(resepTemplate, 'resep-template.json');
     };
 
+     const handleDownloadPlaylistTemplate = () => {
+        const playlistTemplate: Playlist[] = [
+            {
+                id: "playlist-contoh-123",
+                title: "Nama Playlist Anda",
+                description: "Deskripsi singkat tentang playlist ini.",
+                imageId: "coffee-journey",
+                songs: [
+                    {
+                        title: "Judul Lagu Contoh",
+                        artist: "Nama Artis Contoh",
+                        audioUrl: "data:audio/mp3;base64,..." // base64 data akan ditambahkan saat unggah file
+                    }
+                ]
+            }
+        ];
+        // Note: audioUrl will be populated on actual file upload in the admin UI,
+        // so we can leave it empty or with a placeholder in the template.
+        playlistTemplate[0].songs[0].audioUrl = ""; 
+        handleDownload(playlistTemplate, 'playlist-template.json');
+    };
+
     const handleDownloadMenuTemplate = () => {
         // Use a subset of staticData for the main menu/content template
-        const { resepKopi, ...menuTemplate } = staticData;
+        const { resepKopi, playlistSaya, ...menuTemplate } = staticData;
         handleDownload(menuTemplate, 'menu-template.json');
     };
 
     return (
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-3">
             <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
                 <CardHeader>
                     <CardTitle>Template Menu & Konten</CardTitle>
@@ -74,6 +95,19 @@ export default function AdminTemplatePage() {
                      <Button onClick={handleDownloadResepTemplate} className="w-full">
                         <Download className="mr-2 h-4 w-4" />
                         Unduh resep-template.json
+                    </Button>
+                </CardContent>
+            </Card>
+
+             <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
+                <CardHeader>
+                    <CardTitle>Template Playlist</CardTitle>
+                    <CardDescription>Unduh template JSON untuk menambahkan playlist dalam jumlah besar. Edit file ini lalu impor melalui halaman "Kelola Playlist Saya".</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <Button onClick={handleDownloadPlaylistTemplate} className="w-full">
+                        <Download className="mr-2 h-4 w-4" />
+                        Unduh playlist-template.json
                     </Button>
                 </CardContent>
             </Card>
