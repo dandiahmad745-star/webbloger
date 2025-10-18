@@ -8,38 +8,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
-import { staticData as initialStaticData } from "../data-statis";
+import { pesanHarian } from '@/lib/pesan-harian';
 
 export default function PesanRahasiaPage() {
-    const [pageData, setPageData] = useState(initialStaticData.pesanRahasia);
+    const [pageData, setPageData] = useState({ title: "Pesan Hari Ini", message: "" });
     const [isClient, setIsClient] = useState(false);
     const [allImages, setAllImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
+    const [backgroundImage, setBackgroundImage] = useState<ImagePlaceholder | undefined>();
 
     useEffect(() => {
         setIsClient(true);
+        
+        // Pilih pesan harian berdasarkan tanggal
+        const today = new Date();
+        const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
+        const messageIndex = dayOfYear % pesanHarian.length;
+        const dailyMessage = pesanHarian[messageIndex];
+
+        // Ambil data gambar dari local storage jika ada
+        let currentAllImages = [...PlaceHolderImages];
         try {
-            const savedData = localStorage.getItem('pesanRahasiaData');
             const savedUserImages = localStorage.getItem('userImages');
-            
-            const currentAllImages = [...PlaceHolderImages];
             if (savedUserImages) {
                 currentAllImages.push(...JSON.parse(savedUserImages));
             }
-            setAllImages(currentAllImages);
-            
-            if (savedData) {
-                setPageData(JSON.parse(savedData));
-            }
         } catch (error) {
-            console.error("Failed to parse from localStorage", error);
+            console.error("Failed to parse user images from localStorage", error);
         }
+        setAllImages(currentAllImages);
+
+        // Pilih gambar secara acak berdasarkan tanggal juga, agar gambar & pesan konsisten seharian
+        const imageIndex = dayOfYear % currentAllImages.length;
+        const dailyImage = currentAllImages[imageIndex];
+        
+        setBackgroundImage(dailyImage);
+        setPageData(prev => ({ ...prev, message: dailyMessage }));
+
     }, []);
 
-    const { title, message, imageId } = pageData;
-    const backgroundImage: ImagePlaceholder | undefined = allImages.find(p => p.id === imageId);
+    const { title, message } = pageData;
     
     if (!isClient) {
-        return null; // Or a loading spinner
+        return <div className="min-h-screen bg-background" />; // Or a loading spinner
     }
 
     return (
@@ -68,7 +78,7 @@ export default function PesanRahasiaPage() {
                            {title}
                         </CardTitle>
                         <CardDescription className="font-body text-lg md:text-xl text-white/90 text-shadow shadow-black/50 mt-4 max-w-md mx-auto">
-                           {message}
+                           "{message}"
                         </CardDescription>
                     </CardContent>
                 </Card>
