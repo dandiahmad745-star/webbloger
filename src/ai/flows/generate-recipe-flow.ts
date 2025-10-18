@@ -40,6 +40,10 @@ const generateRecipeFlow = ai.defineFlow(
     if (!output) {
       throw new Error('AI failed to generate a recipe.');
     }
+    // Fallback for unique ID generation
+    if (!output.id) {
+        output.id = `resep-${Date.now()}`;
+    }
     // Make ID even more unique to avoid collisions in localStorage
     output.id = `${output.id}-${Date.now()}`;
     return output;
