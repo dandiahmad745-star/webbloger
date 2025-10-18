@@ -31,6 +31,12 @@ export type Playlist = {
     songs: Song[];
 };
 
+export type FAQItem = {
+    id: string;
+    question: string;
+    answer: string;
+};
+
 
 export const staticData = {
     mainPage: {
@@ -115,5 +121,17 @@ export const staticData = {
             ],
             imageId: 'gayo-beans'
           },
-    ] as CoffeeRecipe[]
+    ] as CoffeeRecipe[],
+    faqData: [
+        {
+            id: 'apa-itu-arabica',
+            question: 'Apa bedanya kopi Arabica dan Robusta?',
+            answer: 'Arabica umumnya memiliki rasa yang lebih kompleks, asam, dan aromatik, seringkali dengan nuansa buah atau bunga. Robusta, di sisi lain, memiliki rasa yang lebih kuat, pahit, kandungan kafein lebih tinggi, dan body yang lebih tebal.'
+        },
+        {
+            id: 'metode-seduh-pemula',
+            question: 'Metode seduh apa yang cocok untuk pemula?',
+            answer: 'French Press adalah titik awal yang bagus karena prosesnya sederhana dan tidak memerlukan banyak peralatan khusus. V60 juga populer untuk pemula yang ingin mengeksplorasi metode pour-over, karena memberikan kontrol lebih besar atas hasil akhir.'
+        }
+    ] as FAQItem[]
 }
