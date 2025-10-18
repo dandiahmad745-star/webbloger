@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -14,7 +15,7 @@ const socialLinks = [
   { name: "Learn Coffee", url: "#", icon: Coffee },
   { name: "Kisah Saya", url: "#", icon: BookOpen },
   { name: "learn coffee utensils", url: "#", icon: Utensils },
-  { name: "Hubungi Kami", url: "mailto:halo@kopi.com", icon: Mail },
+  { name: "Hubungi Saya", url: "mailto:halo@kopi.com", icon: Mail },
   { name: "Ngobrol", url: "#", icon: MessageCircle },
 ];
 
