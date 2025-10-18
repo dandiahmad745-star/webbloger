@@ -1,4 +1,10 @@
 
+export type Utensil = {
+    name: string;
+    description: string;
+    icon: string;
+};
+
 export const staticData = {
     kisahSaya: {
         title: "Kisah Saya",
@@ -18,6 +24,8 @@ export const staticData = {
             { name: "V60 Dripper", description: "Metode pour-over klasik untuk secangkir kopi yang jernih dan bersih.", icon: "Wind" },
             { name: "Aeropress", description: "Alat serbaguna yang menghasilkan kopi kaya rasa dengan tingkat keasaman rendah.", icon: "Coffee" },
             { name: "French Press", description: "Metode rendam yang menghasilkan kopi dengan body penuh dan tekstur yang kaya.", icon: "Droplets" },
-        ]
+        ] as Utensil[]
     }
 }
+
+    
