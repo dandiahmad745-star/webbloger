@@ -5,15 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Coffee, Wind, Droplets } from "lucide-react";
 import Link from "next/link";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
+import { staticData } from "../data-statis";
 
-const utensils = [
-    { name: "V60 Dripper", description: "Metode pour-over klasik untuk secangkir kopi yang jernih dan bersih.", icon: Wind },
-    { name: "Aeropress", description: "Alat serbaguna yang menghasilkan kopi kaya rasa dengan tingkat keasaman rendah.", icon: Coffee },
-    { name: "French Press", description: "Metode rendam yang menghasilkan kopi dengan body penuh dan tekstur yang kaya.", icon: Droplets },
-]
+const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
+    Wind,
+    Coffee,
+    Droplets,
+};
+
 
 export default function UtensilsPage() {
-    const utensilsImage: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === 'coffee-utensils');
+    const { title, description, imageId, items } = staticData.utensils;
+    const utensilsImage: ImagePlaceholder | undefined = PlaceHolderImages.find(p => p.id === imageId);
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 fade-in bg-background">
@@ -28,18 +31,18 @@ export default function UtensilsPage() {
                             </Link>
                              <div className="text-center flex-grow">
                                 <CardTitle className="font-headline text-4xl md:text-5xl text-primary">
-                                    Coffee Utensils
+                                    {title}
                                 </CardTitle>
                                 <CardDescription className="font-body text-base md:text-lg text-foreground/80 pt-2">
-                                    Peralatan untuk Secangkir Kopi Sempurna
+                                    {description}
                                 </CardDescription>
                             </div>
                             <div className="w-10"></div>
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 md:p-8 grid md:grid-cols-3 gap-8">
-                        {utensils.map(item => {
-                            const Icon = item.icon;
+                        {items.map(item => {
+                            const Icon = iconMap[item.icon];
                             return (
                                 <div key={item.name} className="flex flex-col items-center text-center">
                                     <div className="p-4 bg-accent/20 rounded-full mb-4">
