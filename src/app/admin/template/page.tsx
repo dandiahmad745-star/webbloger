@@ -50,7 +50,6 @@ export default function AdminTemplatePage() {
         handleDownload(menuTemplate, 'menu-template.json');
     };
 
-_instruction_
     return (
         <div className="grid gap-8 md:grid-cols-2">
             <Card className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg">
